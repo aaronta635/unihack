@@ -15,6 +15,7 @@
     "http-errors": "~1.6.3",
     "jade": "^0.29.0",
     "morgan": "^1.10.1",
+    "multer": "^2.1.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
   }
