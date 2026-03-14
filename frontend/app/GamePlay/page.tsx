@@ -50,10 +50,45 @@ export default function GamePlay() {
     enabled: !!courseId,
   });
 
+  type McqQuestion = {
+    question: string;
+    options: string[];
+    correct_index: number;
+  };
+
+  const {
+    data: apiQuestions,
+    isLoading: questionsLoading,
+    isError: questionsError,
+  } = useQuery({
+    queryKey: ["questions", courseId, weekNumber],
+    queryFn: async (): Promise<McqQuestion[]> => {
+      if (!courseId || !weekNumber || weekNumber <= 0) return [];
+      const base =
+        process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
+      const res = await fetch(
+        `${base}/api/questions?course_id=${encodeURIComponent(
+          courseId
+        )}&week_number=${weekNumber}`
+      );
+      if (!res.ok) {
+        console.error("Failed to load questions from API", res.status);
+        return [];
+      }
+      const json = await res.json();
+      return (json.questions ?? []) as McqQuestion[];
+    },
+    enabled: !!courseId && weekNumber > 0,
+  });
+
   const weekData = course?.weeks?.find(
     (w: { week_number: number }) => w.week_number === weekNumber
   );
-  const questions = weekData?.questions ?? [];
+  const questions: McqQuestion[] = (apiQuestions ?? []);
+
+  useEffect(() => {
+    if (courseId && questions.length > 0) window.scrollTo(0, 0);
+  }, [courseId, questions.length]);
 
   useEffect(() => {
     if (courseId && questions.length > 0) window.scrollTo(0, 0);

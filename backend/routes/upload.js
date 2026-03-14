@@ -81,7 +81,6 @@ router.post('/pdf', upload.single('file'), async (req, res) => {
       return res.status(400).json({ error: 'No file uploaded' });
     }
     const file = req.file;
-    const fileName = `${Date.now()}-${file.originalname}`;
     // Parse PDF buffer (pdf-parse v2: PDFParse({ data }) → getText() → result.text)
     let parser;
     let text;
@@ -117,28 +116,43 @@ router.post('/pdf', upload.single('file'), async (req, res) => {
         return res.status(400).json({ error: 'Answer must be 1-4.' });
       }
     }
-    // Store questions and minimal metadata
+    const courseId = req.body.course_id != null ? String(req.body.course_id).trim() || null : null;
+    const weekNum = req.body.week_number != null ? Number(req.body.week_number) : null;
+    if (!courseId || weekNum == null || weekNum < 1) {
+      return res.status(400).json({ error: 'Missing or invalid course_id and week_number (form fields).' });
+    }
+
+    await supabase
+      .from('questions')
+      .delete()
+      .eq('course_id', courseId)
+      .eq('week_number', weekNum);
+
+    const rows = questions.map((q) => ({
+      title: q.title,
+      choice1: q.choice1,
+      choice2: q.choice2,
+      choice3: q.choice3,
+      choice4: q.choice4,
+      answer: q.answer,
+      course_id: courseId,
+      week_number: weekNum,
+    }));
+
     const { data, error } = await supabase
       .from('questions')
-      .insert(
-        questions.map((q) => ({
-          title: q.title,
-          choice1: q.choice1,
-          choice2: q.choice2,
-          choice3: q.choice3,
-          choice4: q.choice4,
-          answer: q.answer,
-        }))
-      )
+      .insert(rows)
       .select('id');
     if (error) {
       return res.status(500).json({ error: error.message });
     }
     res.status(201).json({
-      message: 'Questions generated and stored.',
+      message: 'Questions generated and stored for course/week.',
       insertedCount: data?.length || 0,
       ids: (data || []).map((r) => r.id),
-      fileName,
+      course_id: courseId,
+      week_number: weekNum,
+      fileName: `${Date.now()}-${file.originalname}`,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

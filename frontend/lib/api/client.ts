@@ -14,6 +14,16 @@ import type { School, Course, ScoreEntry } from "@/lib/types/entities";
 /** Toggle: use mock schools/courses/scores for testing. Set false when connecting to real API. */
 const USE_MOCK_ENTITIES = true;
 
+export function getApiBase(): string {
+  const env = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (env) return env;
+  if (typeof window !== "undefined")
+    return `${window.location.protocol}//${window.location.hostname}:3000`;
+  return "http://localhost:3000";
+}
+
+const API_BASE = getApiBase();
+
 /** In-memory list of scores submitted during this session (so leaderboard updates after playing). */
 let mockScoresCreatedThisSession: ScoreEntry[] = [];
 
@@ -69,14 +79,39 @@ const entities = {
     update: (_id?: string, _data?: unknown) => Promise.resolve(),
   },
   Score: {
-    list: (_order?: string, _limit?: number): Promise<ScoreEntry[]> => {
-      if (!USE_MOCK_ENTITIES) return Promise.resolve([]);
-      const combined = [...mockScoresCreatedThisSession, ...MOCK_SCORES];
-      combined.sort((a, b) => b.score - a.score);
-      return Promise.resolve(combined);
+    // order is ignored for now; limit used for backend
+    async list(_order?: string, limit = 100): Promise<ScoreEntry[]> {
+      if (USE_MOCK_ENTITIES) {
+        const combined = [...mockScoresCreatedThisSession, ...MOCK_SCORES];
+        combined.sort((a, b) => b.score - a.score);
+        return combined;
+      }
+
+      const url = `${API_BASE}/api/leaderboard?limit=${limit}`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        console.error("Failed to load leaderboard from API", res.status);
+        return [];
+      }
+      const json = await res.json();
+      const rows = (json.leaderboard ?? []) as any[];
+      return rows.map((r) => ({
+        id: String(r.id),
+        player_name: r.player_name ?? "Anonymous",
+        player_email: r.player_email ?? "",
+        course_id: r.course_id ?? undefined,
+        course_title: r.course_title ?? undefined, // backend doesn’t have this yet; stays undefined
+        week_number: r.week_number ?? undefined,
+        score: r.score ?? 0,
+        total_questions: r.total_questions ?? undefined,
+        time_taken_seconds: r.time_taken_seconds ?? undefined,
+      }));
     },
-    create: (data?: Record<string, unknown>) => {
-      if (USE_MOCK_ENTITIES && data) {
+
+    async create(data?: Record<string, unknown>) {
+      if (!data) return;
+
+      if (USE_MOCK_ENTITIES) {
         const newEntry: ScoreEntry = {
           id: `mock-${Date.now()}`,
           player_name: (data.player_name as string) ?? "Anonymous",
@@ -89,8 +124,28 @@ const entities = {
           time_taken_seconds: (data.time_taken_seconds as number) ?? undefined,
         };
         mockScoresCreatedThisSession.push(newEntry);
+        return;
       }
-      return Promise.resolve();
+
+      const payload = {
+        player_name: data.player_name ?? "Anonymous",
+        player_email: data.player_email ?? "",
+        course_id: data.course_id,
+        week_number: data.week_number,
+        score: data.score ?? 0,
+        questions_answered: data.total_questions ?? 0,
+        correct_count: data.correct_count ?? 0,
+      };
+
+      const res = await fetch(`${API_BASE}/api/scores`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error("Failed to submit score", res.status, err);
+      }
     },
   },
 };
@@ -107,4 +162,48 @@ const integrations = {
   },
 };
 
-export const api = { auth, entities, integrations };
+type TutorChatMessage = { role: "user" | "assistant"; content: string };
+
+const tutor = {
+  async chat(params: {
+    messages: TutorChatMessage[];
+    personalityKey: string;
+    lessonContext?: string;
+  }): Promise<string> {
+    const res = await fetch(`${API_BASE}/tutor/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: params.messages,
+        personalityKey: params.personalityKey,
+        lessonContext: params.lessonContext ?? undefined,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || "Tutor request failed");
+    }
+    const data = await res.json();
+    return data.reply ?? "";
+  },
+  async speak(params: {
+    text: string;
+    personalityKey?: string;
+  }): Promise<Blob> {
+    const res = await fetch(`${API_BASE}/tutor/speech`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: params.text,
+        personalityKey: params.personalityKey ?? undefined,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || "TTS request failed");
+    }
+    return res.blob();
+  },
+};
+
+export const api = { auth, entities, integrations, tutor };
