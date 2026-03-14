@@ -7,21 +7,21 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 const rankStyles = [
   {
     bg: "from-[#ffb3c6] to-[#ffc5d0]",
-    border: "border-[#ff8fb1]/70",
+    border: "border-[#ff8fb1]/80",
     icon: Crown,
-    iconColor: "text-[#c2185b]",
+    iconColor: "text-[#4a2b3e]",
   },
   {
     bg: "from-[#ffe6f0] to-[#ffe6de]",
     border: "border-[#ffd6e8]/80",
     icon: Medal,
-    iconColor: "text-[#ff8fb1]",
+    iconColor: "text-[#4a2b3e]",
   },
   {
-    bg: "from-[#ffe6de] to-[#e0f7ff]",
+    bg: "from-[#ffe6de] to-[#e0f7ff]/90",
     border: "border-[#ffb3c6]/60",
     icon: Medal,
-    iconColor: "text-[#ffb199]",
+    iconColor: "text-[#4a2b3e]",
   },
 ];
 
@@ -40,7 +40,7 @@ export default function Leaderboard({ scores }: { scores: Score[] }) {
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#ffc5d0] via-[#ff8a8a] to-[#6b5bff] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#ffc5d0] to-[#ff8a8a] flex items-center justify-center">
           <Trophy className="w-4 h-4 text-white" />
         </div>
         <h2 className="text-lg font-bold text-[#4a2b3e]">Leaderboard</h2>
@@ -48,8 +48,8 @@ export default function Leaderboard({ scores }: { scores: Score[] }) {
       <ScrollArea className="flex-1">
         <div className="space-y-2 pr-2">
           {sorted.length === 0 && (
-            <div className="text-center py-8">
-              <Star className="w-8 h-8 text-[#c2185b]/60 mx-auto mb-2" />
+            <div className="text-center py-8 bg-[#ffe6f0]/80 rounded-xl border border-[#ffd6e8]">
+              <Star className="w-8 h-8 text-[#c2185b]/70 mx-auto mb-2" />
               <p className="text-[#4a2b3e] text-sm font-semibold">
                 No scores yet
               </p>
@@ -70,20 +70,20 @@ export default function Leaderboard({ scores }: { scores: Score[] }) {
                 className={`p-3 rounded-xl flex items-center gap-3 ${
                   style
                     ? `bg-gradient-to-r ${style.bg} border ${style.border}`
-                    : "bg-gradient-to-r from-[#ffe6f0] to-[#ffe6de] border border-[#ffd6e8]"
+                    : "bg-[#ffe6f0]/70 border border-[#ffd6e8]"
                 }`}
               >
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center ${
                     style
-                      ? "bg-[#3b2a26]/80"
-                      : "bg-[#4a3832]/80"
+                      ? "bg-white/80"
+                      : "bg-[#ffd6e8]/80"
                   }`}
                 >
                   {RankIcon ? (
-                    <RankIcon className={`w-4 h-4 ${style.iconColor}`} />
+                    <RankIcon className={`w-4 h-4 ${style?.iconColor ?? "text-[#4a2b3e]"}`} />
                   ) : (
-                    <span className="text-xs font-bold text-[#f5f5f5]">
+                    <span className="text-xs font-bold text-[#4a2b3e]">
                       {i + 1}
                     </span>
                   )}

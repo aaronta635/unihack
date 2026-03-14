@@ -4,6 +4,12 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Sparkles, X, Bot, User as UserIcon, ArrowLeft } from "lucide-react";
 import type { McqQuestion } from "@/lib/types/entities";
+import { useTutorSettings } from "@/contexts/TutorSettingsContext";
+import { getPersonalityFallbackMessages } from "@/lib/tutorPersonalities";
+import { speakTutorReply, stopTutorVoice } from "@/lib/tutorVoice";
+import { api } from "@/lib/api/client";
+import TutorPersonalitySelector from "@/components/TutorPersonalitySelector";
+import TutorResponseModeToggle from "@/components/TutorResponseModeToggle";
 
 /** One message in the AI chat (user choice or AI tutor response). */
 type ChatMessage = {
@@ -62,13 +68,13 @@ function McqSection({
           </p>
         </div>
       </div>
-      <div className="space-y-2 flex-1 min-h-0">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-1 min-h-0 content-start">
         {optionLabels.map((optionText, optionIndex) => (
           <motion.button
             key={optionIndex}
             onClick={() => onOptionSelect(optionIndex)}
             disabled={isAnswerRevealed}
-            whileHover={{ scale: isAnswerRevealed ? 1 : 1.02, x: 4 }}
+            whileHover={{ scale: isAnswerRevealed ? 1 : 1.02 }}
             whileTap={{ scale: 0.98 }}
             className={`w-full text-left py-3 px-4 rounded-xl border-2 text-sm font-bold transition-all duration-300 ${getOptionButtonStyle(
               optionIndex
@@ -119,10 +125,11 @@ function McqSection({
 type AiChatSectionProps = {
   messages: ChatMessage[];
   onSendUserMessage: (text: string) => void;
+  isLoading?: boolean;
 };
 
 /** AI chat area: bottom row left, scrollable, user vs AI bubbles. */
-function AiChatSection({ messages, onSendUserMessage }: AiChatSectionProps) {
+function AiChatSection({ messages, onSendUserMessage, isLoading = false }: AiChatSectionProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [inputValue, setInputValue] = useState("");
 
@@ -136,7 +143,7 @@ function AiChatSection({ messages, onSendUserMessage }: AiChatSectionProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = inputValue.trim();
-    if (!trimmed) return;
+    if (!trimmed || isLoading) return;
     onSendUserMessage(trimmed);
     setInputValue("");
   };
@@ -156,7 +163,8 @@ function AiChatSection({ messages, onSendUserMessage }: AiChatSectionProps) {
             Chat with your AI tutor here. Answer the question to see explanations.
           </p>
         ) : (
-          messages.map((msg) => (
+          <>
+            {messages.map((msg) => (
             <motion.div
               key={msg.id}
               initial={{ opacity: 0, y: 8 }}
@@ -186,7 +194,22 @@ function AiChatSection({ messages, onSendUserMessage }: AiChatSectionProps) {
                 {msg.text}
               </div>
             </motion.div>
-          ))
+            ))}
+            {isLoading && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex gap-3"
+              >
+                <div className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center bg-gradient-to-br from-cyan-500 to-blue-600">
+                  <Bot className="w-5 h-5 text-white" />
+                </div>
+                <div className="rounded-2xl px-4 py-3 text-sm text-slate-400 italic bg-slate-700/50 border border-slate-600/50">
+                  Tutor is typing...
+                </div>
+              </motion.div>
+            )}
+          </>
         )}
       </div>
       <form
@@ -198,15 +221,36 @@ function AiChatSection({ messages, onSendUserMessage }: AiChatSectionProps) {
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           placeholder="Ask a follow-up or type your thoughts..."
+<<<<<<< HEAD
           className="flex-1 rounded-lg bg-white/90 border border-[#ffd6e8] px-3 py-2 text-sm text-[#4a2b3e] placeholder:text-[#b66d94] focus:outline-none focus:ring-2 focus:ring-[#ffb3c6]/60 focus:border-[#ffb3c6]/80"
         />
         <button
           type="submit"
           className="px-3 py-2 rounded-lg bg-gradient-to-r from-[#ffc5d0] to-[#ff8a8a] hover:from-[#ffd0da] hover:to-[#ff9b9b] text-xs font-bold text-[#4a2b3e] border border-[#ffb3c6]/80 transition-colors"
+=======
+          disabled={isLoading}
+          className="flex-1 rounded-lg bg-slate-800/80 border border-slate-600/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/60 focus:border-cyan-500/80 disabled:opacity-60 disabled:cursor-not-allowed"
+        />
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="px-3 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-xs font-bold text-slate-900 border border-cyan-300/80 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+>>>>>>> dbedd9924679816a85c8ceb6b0482738ec60a295
         >
           Send
         </button>
       </form>
+    </div>
+  );
+}
+
+/** Compact row: personality selector + response mode toggle (Tutor Personality Mode). */
+function TutorControlsRow() {
+  const { personalityKey, setPersonalityKey, responseMode, setResponseMode } = useTutorSettings();
+  return (
+    <div className="flex flex-wrap items-center gap-2 pb-2 border-b border-slate-600/50 shrink-0">
+      <TutorPersonalitySelector value={personalityKey} onChange={setPersonalityKey} />
+      <TutorResponseModeToggle mode={responseMode} onChange={setResponseMode} />
     </div>
   );
 }
@@ -233,25 +277,44 @@ type QuestionPopupProps = {
   onClose?: () => void;
 };
 
+/** Persists across Strict Mode remounts so we only send welcome + voice once per question. */
+let lastWelcomeQuestionKey: string | null = null;
+
 export default function QuestionPopup({
   target,
   onAnswer,
   onClose,
 }: QuestionPopupProps) {
   const question = target.question;
+  const { personalityKey, responseMode } = useTutorSettings();
   const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(
     null
   );
   const [isAnswerRevealed, setIsAnswerRevealed] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [isTutorLoading, setIsTutorLoading] = useState(false);
   const welcomeSentRef = useRef(false);
 
-  const addChatMessage = useCallback((text: string, sender: "user" | "ai") => {
-    setChatMessages((prev) => [
-      ...prev,
-      { id: `msg-${Date.now()}-${prev.length}`, text, sender },
-    ]);
-  }, []);
+  const addChatMessage = useCallback(
+    (
+      text: string,
+      sender: "user" | "ai",
+      opts?: { skipVoice?: boolean }
+    ) => {
+      setChatMessages((prev) => [
+        ...prev,
+        { id: `msg-${Date.now()}-${prev.length}`, text, sender },
+      ]);
+      if (
+        sender === "ai" &&
+        responseMode === "voice" &&
+        !opts?.skipVoice
+      ) {
+        speakTutorReply({ text, personalityKey });
+      }
+    },
+    [responseMode, personalityKey]
+  );
 
   // Reset chat and welcome when question changes (e.g. next checkpoint)
   useEffect(() => {
@@ -259,15 +322,26 @@ export default function QuestionPopup({
     setChatMessages([]);
   }, [question]);
 
-  // AI welcome when popup opens (once per question)
   useEffect(() => {
-    if (welcomeSentRef.current) return;
+    return () => {
+      stopTutorVoice();
+    };
+  }, []);
+
+  // Stop voice when user switches to Text mode
+  useEffect(() => {
+    if (responseMode !== "voice") stopTutorVoice();
+  }, [responseMode]);
+
+  // AI welcome when popup opens (once per question) — always add message; speak only once (avoids double voice in Strict Mode)
+  useEffect(() => {
+    const questionKey = question.question ?? "";
+    const alreadySpoke = lastWelcomeQuestionKey === questionKey;
+    if (!alreadySpoke) lastWelcomeQuestionKey = questionKey;
     welcomeSentRef.current = true;
-    addChatMessage(
-      "Here's a quick question! Pick the answer you think is right — I'll explain after.",
-      "ai"
-    );
-  }, [question, addChatMessage]);
+    const messages = getPersonalityFallbackMessages(personalityKey);
+    addChatMessage(messages.welcome, "ai", alreadySpoke ? { skipVoice: true } : undefined);
+  }, [question, addChatMessage, personalityKey]);
 
   const handleOptionSelect = useCallback(
     (optionIndex: number) => {
@@ -283,23 +357,45 @@ export default function QuestionPopup({
       const correctLetter = String.fromCharCode(
         65 + question.correct_index
       );
-      const correctText = question.options[question.correct_index];
+      const correctText = question.options[question.correct_index] ?? "";
+      const messages = getPersonalityFallbackMessages(personalityKey);
 
       if (isCorrect) {
-        addChatMessage(
-          "That's correct! Nice work — you've got this concept. +10 points!",
-          "ai"
-        );
+        addChatMessage(messages.correct, "ai");
       } else {
-        addChatMessage(
-          `Not quite. The right answer is ${correctLetter}: ${correctText}. Review this and you'll get the next one!`,
-          "ai"
-        );
+        addChatMessage(messages.wrong(correctLetter, correctText), "ai");
       }
 
       onAnswer(isCorrect);
     },
-    [question, isAnswerRevealed, addChatMessage, onAnswer]
+    [question, isAnswerRevealed, addChatMessage, onAnswer, personalityKey]
+  );
+
+  const handleSendUserMessage = useCallback(
+    async (text: string) => {
+      addChatMessage(text, "user");
+      setIsTutorLoading(true);
+      try {
+        const apiMessages = [
+          ...chatMessages.map((m) => ({
+            role: m.sender === "user" ? ("user" as const) : ("assistant" as const),
+            content: m.text,
+          })),
+          { role: "user" as const, content: text },
+        ];
+        const reply = await api.tutor.chat({
+          messages: apiMessages,
+          personalityKey,
+          lessonContext: question.question,
+        });
+        addChatMessage(reply, "ai");
+      } catch {
+        addChatMessage("Sorry, I couldn't get a response. Please try again.", "ai");
+      } finally {
+        setIsTutorLoading(false);
+      }
+    },
+    [chatMessages, personalityKey, question.question, addChatMessage]
   );
 
   return (
@@ -311,7 +407,7 @@ export default function QuestionPopup({
     >
       {/* Semi-transparent overlay — game stays visible in background */}
       <div
-        className="absolute inset-0 bg-[#ffe6f0]/40 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
         aria-hidden
       />
       {/* Large popup card — inside game, game visible around edges */}
@@ -320,7 +416,7 @@ export default function QuestionPopup({
         animate={{ scale: 1 }}
         exit={{ scale: 0.95 }}
         transition={{ type: "spring", bounce: 0.3 }}
-        className="popup-after-interact relative z-10 w-full max-w-5xl h-full max-h-[85vh] bg-gradient-to-br from-[#ffe6f0] via-[#ffd6e8] to-[#ffe6de] border-4 border-[#ffb3c6]/80 rounded-3xl shadow-2xl shadow-pink-300/50 overflow-hidden flex flex-col"
+        className="popup-after-interact relative z-10 w-full max-w-5xl h-full max-h-[85vh] bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 border-4 border-yellow-400/60 rounded-3xl shadow-2xl shadow-yellow-500/30 overflow-hidden flex flex-col"
       >
         {/* Back button — icon only */}
         {onClose && (
@@ -329,7 +425,7 @@ export default function QuestionPopup({
             onClick={onClose}
             title="Back to game"
             aria-label="Back to game"
-            className="absolute top-4 left-4 z-20 flex items-center justify-center w-10 h-10 rounded-xl bg-[#ffe6f0]/90 hover:bg-[#ffd6e8]/90 border-2 border-[#ffb3c6]/80 text-[#4a2b3e] shadow-lg transition-colors"
+            className="absolute top-4 left-4 z-20 flex items-center justify-center w-10 h-10 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 border-2 border-pink-400/50 text-white shadow-lg transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -356,7 +452,7 @@ export default function QuestionPopup({
 
         {/* Layout: top = Question+MCQ (40%), bottom = AI chat | anime character (60%) */}
         <div className="popup-after-interact__body relative z-10 flex flex-col flex-1 min-h-0 pt-6 pr-6 pb-6 pl-14 gap-5">
-          <div className="popup-after-interact__mcq flex flex-col min-h-0 flex-[0_0_40%] border border-[#ffb3c6]/60 rounded-2xl bg-white/70 p-5 overflow-auto">
+          <div className="popup-after-interact__mcq flex flex-col min-h-0 flex-[0_0_40%] border border-white/10 rounded-2xl bg-slate-900/40 p-5 overflow-auto">
             <McqSection
               question={question}
               selectedOptionIndex={selectedOptionIndex}
@@ -366,9 +462,11 @@ export default function QuestionPopup({
           </div>
           <div className="popup-after-interact__chat-area flex-1 flex gap-4 min-h-0">
             <div className="flex-1 flex flex-col min-w-0 min-h-0">
+              <TutorControlsRow />
               <AiChatSection
                 messages={chatMessages}
-                onSendUserMessage={(text) => addChatMessage(text, "user")}
+                onSendUserMessage={handleSendUserMessage}
+                isLoading={isTutorLoading}
               />
             </div>
             <div className="popup-after-interact__character w-32 flex-shrink-0 flex flex-col min-h-0">

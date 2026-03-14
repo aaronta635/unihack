@@ -18,7 +18,7 @@ export default function CourseSelector({
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#ffc5d0] via-[#ff8a8a] to-[#6b5bff] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#ffc5d0] to-[#ff8a8a] flex items-center justify-center">
           <BookOpen className="w-4 h-4 text-white" />
         </div>
         <h2 className="text-lg font-bold text-[#4a2b3e]">Courses</h2>
@@ -34,17 +34,13 @@ export default function CourseSelector({
               onClick={() => onSelect(course)}
               className={`w-full text-left p-3 rounded-xl transition-all duration-200 group flex items-center justify-between ${
                 selectedCourse?.id === course.id
-                  ? "bg-gradient-to-r from-[#ffb3c6]/90 to-[#ffc5d0]/90 border border-[#ff8fb1] shadow-lg"
-                  : "bg-white/70 hover:bg-[#ffe6f0] border border-[#ffd6e8] hover:border-[#ff8fb1]"
+                  ? "bg-gradient-to-r from-[#ffb3c6]/90 to-[#ffc5d0]/90 border-2 border-[#ff8fb1] shadow-lg"
+                  : "bg-[#ffe6f0]/70 hover:bg-[#ffd6e8]/80 border-2 border-[#ffd6e8] hover:border-[#ff8fb1]"
               }`}
             >
               <div>
                 <p
-                  className={`font-semibold text-sm ${
-                    selectedCourse?.id === course.id
-                      ? "text-[#c2185b]"
-                      : "text-[#4a2b3e]"
-                  }`}
+                  className={`font-semibold text-sm ${selectedCourse?.id === course.id ? "text-[#c2185b]" : "text-[#4a2b3e]"}`}
                 >
                   {course.code}
                 </p>
@@ -53,7 +49,7 @@ export default function CourseSelector({
                 </p>
               </div>
               <ChevronRight
-                className={`w-4 h-4 transition-transform ${selectedCourse?.id === course.id ? "text-[#ff9b4d] translate-x-0" : "text-[#6e6e6e] -translate-x-2 group-hover:translate-x-0 group-hover:text-[#ff9b4d]"}`}
+                className={`w-4 h-4 transition-transform ${selectedCourse?.id === course.id ? "text-[#c2185b] translate-x-0" : "text-[#b66d94] -translate-x-2 group-hover:translate-x-0 group-hover:text-[#c2185b]"}`}
               />
             </motion.button>
           ))}
