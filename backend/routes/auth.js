@@ -125,4 +125,22 @@ router.post('/login', async (req, res) => {
   res.json(data);
 });
 
+/**
+ * GET /auth/me
+ * Authorization: Bearer <access_token>
+ * Returns current user when token is valid.
+ */
+router.get('/me', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Missing or invalid authorization' });
+  }
+  const token = authHeader.slice(7);
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) {
+    return res.status(401).json({ error: error?.message || 'Invalid token' });
+  }
+  res.json({ user });
+});
+
 module.exports = router;
