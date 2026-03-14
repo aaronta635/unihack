@@ -311,7 +311,7 @@ export default function QuestionPopup({
     >
       {/* Semi-transparent overlay — game stays visible in background */}
       <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-[#ffe6f0]/40 backdrop-blur-[2px]"
         aria-hidden
       />
       {/* Large popup card — inside game, game visible around edges */}
@@ -320,7 +320,7 @@ export default function QuestionPopup({
         animate={{ scale: 1 }}
         exit={{ scale: 0.95 }}
         transition={{ type: "spring", bounce: 0.3 }}
-        className="popup-after-interact relative z-10 w-full max-w-5xl h-full max-h-[85vh] bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 border-4 border-yellow-400/60 rounded-3xl shadow-2xl shadow-yellow-500/30 overflow-hidden flex flex-col"
+        className="popup-after-interact relative z-10 w-full max-w-5xl h-full max-h-[85vh] bg-gradient-to-br from-[#ffe6f0] via-[#ffd6e8] to-[#ffe6de] border-4 border-[#ffb3c6]/80 rounded-3xl shadow-2xl shadow-pink-300/50 overflow-hidden flex flex-col"
       >
         {/* Back button — icon only */}
         {onClose && (
@@ -329,7 +329,7 @@ export default function QuestionPopup({
             onClick={onClose}
             title="Back to game"
             aria-label="Back to game"
-            className="absolute top-4 left-4 z-20 flex items-center justify-center w-10 h-10 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 border-2 border-pink-400/50 text-white shadow-lg transition-colors"
+            className="absolute top-4 left-4 z-20 flex items-center justify-center w-10 h-10 rounded-xl bg-[#ffe6f0]/90 hover:bg-[#ffd6e8]/90 border-2 border-[#ffb3c6]/80 text-[#4a2b3e] shadow-lg transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -356,7 +356,7 @@ export default function QuestionPopup({
 
         {/* Layout: top = Question+MCQ (40%), bottom = AI chat | anime character (60%) */}
         <div className="popup-after-interact__body relative z-10 flex flex-col flex-1 min-h-0 pt-6 pr-6 pb-6 pl-14 gap-5">
-          <div className="popup-after-interact__mcq flex flex-col min-h-0 flex-[0_0_40%] border border-white/10 rounded-2xl bg-slate-900/40 p-5 overflow-auto">
+          <div className="popup-after-interact__mcq flex flex-col min-h-0 flex-[0_0_40%] border border-[#ffb3c6]/60 rounded-2xl bg-white/70 p-5 overflow-auto">
             <McqSection
               question={question}
               selectedOptionIndex={selectedOptionIndex}
