@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Upload, Play, FileText, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { api } from "@/lib/api/client";
 
 type Week = {
   week_number: number;
@@ -16,6 +15,8 @@ type Week = {
 
 type Course = { id: string; code?: string; weeks?: Week[] };
 
+const WEEK_NUMBERS = Array.from({ length: 12 }, (_, i) => i + 1);
+
 export default function WeekSelector({
   course,
   onStartGame,
@@ -25,40 +26,97 @@ export default function WeekSelector({
 }) {
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [weekHasQuestions, setWeekHasQuestions] = useState<
+    Record<number, boolean>
+  >({});
 
   const weeks = course?.weeks ?? [];
+
+  useEffect(() => {
+    if (!course) {
+      setWeekHasQuestions({});
+      return;
+    }
+
+    let cancelled = false;
+    const base =
+      process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
+
+    const load = async () => {
+      try {
+        const results = await Promise.all(
+          WEEK_NUMBERS.map(async (num) => {
+            const res = await fetch(
+              `${base}/api/questions?course_id=${encodeURIComponent(
+                course.id
+              )}&week_number=${num}`
+            );
+            if (!res.ok) return [num, false] as const;
+            const json = await res.json().catch(() => ({ questions: [] }));
+            const hasQ =
+              Array.isArray(json.questions) && json.questions.length > 0;
+            return [num, hasQ] as const;
+          })
+        );
+        if (!cancelled) {
+          setWeekHasQuestions(Object.fromEntries(results));
+        }
+      } catch (err) {
+        console.error("Failed to load week question availability", err);
+        if (!cancelled) {
+          setWeekHasQuestions({});
+        }
+      }
+    };
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [course?.id]);
 
   const handleUpload = async (weekNum: number) => {
     const input = document.createElement("input");
     input.type = "file";
-    input.accept = ".pdf,.doc,.docx,.txt";
+    input.accept = ".pdf";
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file || !course) return;
-      setUploading(true);
-      const { file_url } = await api.integrations.Core.UploadFile({ file });
-      const updatedWeeks = [...(course.weeks ?? [])];
-      const weekIdx = updatedWeeks.findIndex((w) => w.week_number === weekNum);
-      if (weekIdx >= 0) {
-        updatedWeeks[weekIdx] = {
-          ...updatedWeeks[weekIdx],
-          tutorial_url: file_url,
-        };
-      } else {
-        updatedWeeks.push({
-          week_number: weekNum,
-          title: `Week ${weekNum}`,
-          tutorial_url: file_url,
-          questions: [],
+  
+      try {
+        setUploading(true);
+        const base =
+          process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("course_id", course.id);
+        formData.append("week_number", String(weekNum));
+  
+        const res = await fetch(`${base}/upload/pdf`, {
+          method: "POST",
+          body: formData,
         });
+  
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          console.error("Upload failed", res.status, err);
+          alert("Failed to upload PDF and generate questions.");
+        } else {
+          const json = await res.json().catch(() => ({}));
+          console.log("Upload OK", json);
+          alert(
+            `Questions ready for Week ${weekNum} (inserted ${json.insertedCount ?? "?"}).`
+          );
+          // Optional: reload to refresh any UI state; GamePlay already reads from API.
+          // window.location.reload();
+        }
+      } finally {
+        setUploading(false);
       }
-      await api.entities.Course.update(course.id, { weeks: updatedWeeks });
-      setUploading(false);
     };
     input.click();
   };
-
-  const weekNumbers = Array.from({ length: 12 }, (_, i) => i + 1);
 
   return (
     <div className="h-full flex flex-col">
@@ -72,10 +130,10 @@ export default function WeekSelector({
       </div>
       <ScrollArea className="flex-1">
         <div className="space-y-2 pr-2">
-          {weekNumbers.map((num) => {
+          {WEEK_NUMBERS.map((num) => {
             const weekData = weeks.find((w) => w.week_number === num);
-            const hasQuestions = (weekData?.questions?.length ?? 0) > 0;
             const hasTutorial = !!weekData?.tutorial_url;
+            const hasQuestions = !!weekHasQuestions[num];
 
             return (
               <motion.div
@@ -107,10 +165,10 @@ export default function WeekSelector({
                         </p>
                         <p className="text-xs text-slate-800 font-medium">
                           {hasQuestions
-                            ? `${weekData!.questions!.length} questions ready`
+                            ? "Ready to play"
                             : hasTutorial
                               ? "Tutorial uploaded"
-                              : "No content yet"}
+                              : "No questions yet"}
                         </p>
                       </div>
                     </div>
@@ -152,10 +210,10 @@ export default function WeekSelector({
                               ? "Replace Tutorial"
                               : "Upload Tutorial"}
                         </Button>
-                        {hasQuestions && weekData && course && (
+                        {course && (
                           <Button
                             size="sm"
-                            onClick={() => onStartGame(course, weekData)}
+                            onClick={() => onStartGame(course, weekData ?? { week_number: num })}
                             className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white text-xs shadow-lg shadow-pink-500/25"
                           >
                             <Play className="w-3 h-3 mr-1" /> Start Game

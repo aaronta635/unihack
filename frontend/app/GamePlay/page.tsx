@@ -84,10 +84,7 @@ export default function GamePlay() {
   const weekData = course?.weeks?.find(
     (w: { week_number: number }) => w.week_number === weekNumber
   );
-  const questions: McqQuestion[] =
-    apiQuestions && apiQuestions.length > 0
-      ? apiQuestions
-      : ((weekData?.questions as McqQuestion[]) ?? []);
+  const questions: McqQuestion[] = (apiQuestions ?? []);
 
   useEffect(() => {
     if (courseId && questions.length > 0) window.scrollTo(0, 0);
