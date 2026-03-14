@@ -107,4 +107,57 @@ const integrations = {
   },
 };
 
-export const api = { auth, entities, integrations };
+export function getApiBase(): string {
+  const env = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (env) return env;
+  if (typeof window !== "undefined")
+    return `${window.location.protocol}//${window.location.hostname}:3000`;
+  return "http://localhost:3000";
+}
+const API_BASE = getApiBase();
+
+type TutorChatMessage = { role: "user" | "assistant"; content: string };
+
+const tutor = {
+  async chat(params: {
+    messages: TutorChatMessage[];
+    personalityKey: string;
+    lessonContext?: string;
+  }): Promise<string> {
+    const res = await fetch(`${API_BASE}/tutor/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: params.messages,
+        personalityKey: params.personalityKey,
+        lessonContext: params.lessonContext ?? undefined,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || "Tutor request failed");
+    }
+    const data = await res.json();
+    return data.reply ?? "";
+  },
+  async speak(params: {
+    text: string;
+    personalityKey?: string;
+  }): Promise<Blob> {
+    const res = await fetch(`${API_BASE}/tutor/speech`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: params.text,
+        personalityKey: params.personalityKey ?? undefined,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || "TTS request failed");
+    }
+    return res.blob();
+  },
+};
+
+export const api = { auth, entities, integrations, tutor };

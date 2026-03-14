@@ -1,5 +1,7 @@
 "use client";
 
+import { unlockTutorVoice } from "@/lib/tutorVoice";
+
 export type TutorResponseMode = "text" | "voice";
 
 type TutorResponseModeToggleProps = {
@@ -33,7 +35,10 @@ export default function TutorResponseModeToggle({
       </button>
       <button
         type="button"
-        onClick={() => onChange("voice")}
+        onClick={() => {
+          unlockTutorVoice();
+          onChange("voice");
+        }}
         className={`px-3 py-2 text-sm font-semibold transition-colors border-l border-slate-600/50 ${
           mode === "voice"
             ? "bg-cyan-500/30 text-cyan-200 border-cyan-400/50"

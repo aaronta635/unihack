@@ -6,7 +6,8 @@ import { Sparkles, X, Bot, User as UserIcon, ArrowLeft } from "lucide-react";
 import type { McqQuestion } from "@/lib/types/entities";
 import { useTutorSettings } from "@/contexts/TutorSettingsContext";
 import { getPersonalityFallbackMessages } from "@/lib/tutorPersonalities";
-import { speakTutorReply } from "@/lib/tutorVoice";
+import { speakTutorReply, stopTutorVoice } from "@/lib/tutorVoice";
+import { api } from "@/lib/api/client";
 import TutorPersonalitySelector from "@/components/TutorPersonalitySelector";
 import TutorResponseModeToggle from "@/components/TutorResponseModeToggle";
 
@@ -124,10 +125,11 @@ function McqSection({
 type AiChatSectionProps = {
   messages: ChatMessage[];
   onSendUserMessage: (text: string) => void;
+  isLoading?: boolean;
 };
 
 /** AI chat area: bottom row left, scrollable, user vs AI bubbles. */
-function AiChatSection({ messages, onSendUserMessage }: AiChatSectionProps) {
+function AiChatSection({ messages, onSendUserMessage, isLoading = false }: AiChatSectionProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [inputValue, setInputValue] = useState("");
 
@@ -141,7 +143,7 @@ function AiChatSection({ messages, onSendUserMessage }: AiChatSectionProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = inputValue.trim();
-    if (!trimmed) return;
+    if (!trimmed || isLoading) return;
     onSendUserMessage(trimmed);
     setInputValue("");
   };
@@ -161,7 +163,8 @@ function AiChatSection({ messages, onSendUserMessage }: AiChatSectionProps) {
             Chat with your AI tutor here. Answer the question to see explanations.
           </p>
         ) : (
-          messages.map((msg) => (
+          <>
+            {messages.map((msg) => (
             <motion.div
               key={msg.id}
               initial={{ opacity: 0, y: 8 }}
@@ -191,7 +194,22 @@ function AiChatSection({ messages, onSendUserMessage }: AiChatSectionProps) {
                 {msg.text}
               </div>
             </motion.div>
-          ))
+            ))}
+            {isLoading && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex gap-3"
+              >
+                <div className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center bg-gradient-to-br from-cyan-500 to-blue-600">
+                  <Bot className="w-5 h-5 text-white" />
+                </div>
+                <div className="rounded-2xl px-4 py-3 text-sm text-slate-400 italic bg-slate-700/50 border border-slate-600/50">
+                  Tutor is typing...
+                </div>
+              </motion.div>
+            )}
+          </>
         )}
       </div>
       <form
@@ -203,11 +221,13 @@ function AiChatSection({ messages, onSendUserMessage }: AiChatSectionProps) {
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           placeholder="Ask a follow-up or type your thoughts..."
-          className="flex-1 rounded-lg bg-slate-800/80 border border-slate-600/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/60 focus:border-cyan-500/80"
+          disabled={isLoading}
+          className="flex-1 rounded-lg bg-slate-800/80 border border-slate-600/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/60 focus:border-cyan-500/80 disabled:opacity-60 disabled:cursor-not-allowed"
         />
         <button
           type="submit"
-          className="px-3 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-xs font-bold text-slate-900 border border-cyan-300/80 transition-colors"
+          disabled={isLoading}
+          className="px-3 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-xs font-bold text-slate-900 border border-cyan-300/80 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         >
           Send
         </button>
@@ -261,6 +281,7 @@ export default function QuestionPopup({
   );
   const [isAnswerRevealed, setIsAnswerRevealed] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [isTutorLoading, setIsTutorLoading] = useState(false);
   const welcomeSentRef = useRef(false);
 
   const addChatMessage = useCallback((text: string, sender: "user" | "ai") => {
@@ -278,6 +299,17 @@ export default function QuestionPopup({
     welcomeSentRef.current = false;
     setChatMessages([]);
   }, [question]);
+
+  useEffect(() => {
+    return () => {
+      stopTutorVoice();
+    };
+  }, []);
+
+  // Stop voice when user switches to Text mode
+  useEffect(() => {
+    if (responseMode !== "voice") stopTutorVoice();
+  }, [responseMode]);
 
   // AI welcome when popup opens (once per question) — use personality-flavored message
   useEffect(() => {
@@ -314,6 +346,33 @@ export default function QuestionPopup({
       setTimeout(() => onAnswer(isCorrect), delayMs);
     },
     [question, isAnswerRevealed, addChatMessage, onAnswer, personalityKey]
+  );
+
+  const handleSendUserMessage = useCallback(
+    async (text: string) => {
+      addChatMessage(text, "user");
+      setIsTutorLoading(true);
+      try {
+        const apiMessages = [
+          ...chatMessages.map((m) => ({
+            role: m.sender === "user" ? ("user" as const) : ("assistant" as const),
+            content: m.text,
+          })),
+          { role: "user" as const, content: text },
+        ];
+        const reply = await api.tutor.chat({
+          messages: apiMessages,
+          personalityKey,
+          lessonContext: question.question,
+        });
+        addChatMessage(reply, "ai");
+      } catch {
+        addChatMessage("Sorry, I couldn't get a response. Please try again.", "ai");
+      } finally {
+        setIsTutorLoading(false);
+      }
+    },
+    [chatMessages, personalityKey, question.question, addChatMessage]
   );
 
   return (
@@ -383,7 +442,8 @@ export default function QuestionPopup({
               <TutorControlsRow />
               <AiChatSection
                 messages={chatMessages}
-                onSendUserMessage={(text) => addChatMessage(text, "user")}
+                onSendUserMessage={handleSendUserMessage}
+                isLoading={isTutorLoading}
               />
             </div>
             <div className="popup-after-interact__character w-32 flex-shrink-0 flex flex-col min-h-0">
