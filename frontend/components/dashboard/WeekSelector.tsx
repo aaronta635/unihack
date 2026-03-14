@@ -123,10 +123,10 @@ export default function WeekSelector({
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#ffc5d0] via-[#ff8a8a] to-[#6b5bff] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
           <Calendar className="w-4 h-4 text-white" />
         </div>
-        <h2 className="text-lg font-bold text-[#4a2b3e]">
+        <h2 className="text-lg font-bold text-slate-900">
           {course?.code} — Weeks
         </h2>
       </div>
@@ -150,26 +150,22 @@ export default function WeekSelector({
                   }
                   className={`w-full text-left p-3 rounded-xl transition-all duration-200 ${
                     selectedWeek === num
-                      ? "bg-gradient-to-r from-[#ffb3c6]/90 to-[#ffc5d0]/90 border border-[#ff8fb1]"
-                      : "bg-white/70 hover:bg-[#ffe6f0] border border-[#ffd6e8]"
+                      ? "bg-cyan-50 border-2 border-cyan-400"
+                      : "bg-white hover:bg-slate-50 border-2 border-slate-200 shadow-sm"
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-                          hasQuestions
-                            ? "bg-[#ff8fb1] text-white"
-                            : "bg-[#ffe6f0] text-[#b66d94]"
-                        }`}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${hasQuestions ? "bg-green-500/30 text-green-800" : "bg-slate-200 text-slate-800"}`}
                       >
                         {num}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-[#4a2b3e]">
+                        <p className="text-sm font-semibold text-slate-900">
                           Week {num}
                         </p>
-                        <p className="text-xs text-[#8b5a7a] font-medium">
+                        <p className="text-xs text-slate-800 font-medium">
                           {hasQuestions
                             ? "Ready to play"
                             : hasTutorial
@@ -179,7 +175,7 @@ export default function WeekSelector({
                       </div>
                     </div>
                     {hasQuestions && (
-                      <Sparkles className="w-4 h-4 text-[#ff9b4d]" />
+                      <Sparkles className="w-4 h-4 text-yellow-400" />
                     )}
                   </div>
                 </button>
@@ -191,13 +187,13 @@ export default function WeekSelector({
                       exit={{ height: 0, opacity: 0 }}
                       className="overflow-hidden"
                     >
-                      <div className="p-3 ml-4 mt-1 space-y-2 border-l border-[#ffb3c6]/60">
+                      <div className="p-3 ml-4 mt-1 space-y-2 border-l-2 border-cyan-500/30">
                         {hasTutorial && weekData?.tutorial_url && (
                           <a
                             href={weekData.tutorial_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-xs text-[#4a2b3e] hover:text-[#c2185b] font-medium"
+                            className="flex items-center gap-2 text-xs text-slate-800 hover:text-slate-900 font-medium"
                           >
                             <FileText className="w-3 h-3" /> View Tutorial
                           </a>
@@ -207,7 +203,7 @@ export default function WeekSelector({
                           variant="outline"
                           onClick={() => handleUpload(num)}
                           disabled={uploading}
-                          className="w-full border border-[#ffd6e8] bg-white/80 text-[#4a2b3e] hover:bg-[#ffe6f0] hover:text-[#2b1020] text-xs font-semibold"
+                          className="w-full border-2 border-slate-400 bg-white text-slate-800 hover:bg-slate-100 hover:text-slate-900 text-xs font-semibold"
                         >
                           <Upload className="w-3 h-3 mr-1" />
                           {uploading
@@ -219,8 +215,8 @@ export default function WeekSelector({
                         {course && (
                           <Button
                             size="sm"
-                            onClick={() => onStartGame(course, weekData)}
-                            className="w-full bg-gradient-to-r from-[#ff4d4d] to-[#ff9b4d] hover:from-[#ff5c5c] hover:to-[#ffae6b] text-white text-xs shadow-lg shadow-[#ff4d4d]/30"
+                            onClick={() => onStartGame(course, weekData ?? { week_number: num })}
+                            className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white text-xs shadow-lg shadow-pink-500/25"
                           >
                             <Play className="w-3 h-3 mr-1" /> Start Game
                           </Button>

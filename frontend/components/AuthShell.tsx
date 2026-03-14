@@ -24,18 +24,18 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-[#ffe6f0]/70 backdrop-blur-md">
-        <div className="w-8 h-8 border-4 border-[#ffb3c6] border-t-[#ff8fb1] rounded-full animate-spin" />
+      <div className="fixed inset-0 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin" />
       </div>
     );
   }
 
   if (authError?.type === "user_not_registered") {
     return (
-      <div className="fixed inset-0 flex items-center justify-center p-6 bg-[#ffe6f0]/70 backdrop-blur-md">
+      <div className="fixed inset-0 flex items-center justify-center p-6 bg-slate-50">
         <div className="text-center max-w-md">
-          <p className="text-[#4a2b3e] font-semibold mb-2">User not registered</p>
-          <p className="text-[#8b5a7a] text-sm">{authError.message}</p>
+          <p className="text-slate-800 font-semibold mb-2">User not registered</p>
+          <p className="text-slate-600 text-sm">{authError.message}</p>
         </div>
       </div>
     );
