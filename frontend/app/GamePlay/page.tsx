@@ -90,6 +90,10 @@ export default function GamePlay() {
     if (courseId && questions.length > 0) window.scrollTo(0, 0);
   }, [courseId, questions.length]);
 
+  useEffect(() => {
+    if (courseId && questions.length > 0) window.scrollTo(0, 0);
+  }, [courseId, questions.length]);
+
   const handleComplete = async (finalPts: number, totalQ: number) => {
     setFinalScore({ score: finalPts, total: totalQ });
     setGameState("complete");
