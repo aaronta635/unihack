@@ -8,7 +8,7 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const uploadRouter = require('./routes/upload');
 
-require('dotenv').config(); // add this near the top
+require('dotenv').config(); 
 
 
 const indexRouter = require('./routes/index');

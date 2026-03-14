@@ -4,12 +4,15 @@ const supabase = require('../supabase');
 const pdfParsePkg = require('pdf-parse');
 const PDFParse = pdfParsePkg.PDFParse || pdfParsePkg.default || pdfParsePkg;
 const OpenAI = require('openai');
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+function getOpenAI() {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error('OPENAI_API_KEY is not set');
+  return new OpenAI({ apiKey });
+}
 
 async function generateQuestionsFromText(text) {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY is not set');
-  }
+  const openai = getOpenAI();
   const systemPrompt = `You are a helpful assistant that turns educational content into multiple-choice questions.\nOutput a JSON object with a single key "questions" whose value is an array of question objects.\nEach question must have exactly: title (string), choice1, choice2, choice3, choice4 (strings), answer (number 1-4).\nGenerate up to 10 questions from the content. Use the text as the source; extract or adapt questions so they have one correct answer.`;
   const userPrompt = `Turn the following content into multiple-choice questions. Return only valid JSON in this exact shape: { "questions": [ { "title": "...", "choice1": "...", "choice2": "...", "choice3": "...", "choice4": "...", "answer": 1 } ] }\n\nContent:\n${text.slice(0, 12000)}`;
   const completion = await openai.chat.completions.create({
@@ -79,11 +82,16 @@ router.post('/pdf', upload.single('file'), async (req, res) => {
     }
     const file = req.file;
     const fileName = `${Date.now()}-${file.originalname}`;
-    // Parse PDF buffer
-    const parser = new PDFParse({ data: file.buffer });
-    const result = await parser.getText();
-    const text = (result && result.text ? result.text : '').trim();
-    await parser.destroy();
+    // Parse PDF buffer (pdf-parse v2: PDFParse({ data }) → getText() → result.text)
+    let parser;
+    let text;
+    try {
+      parser = new PDFParse({ data: file.buffer });
+      const result = await parser.getText();
+      text = (result && result.text ? result.text : '').trim();
+    } finally {
+      if (parser) await parser.destroy();
+    }
     if (!text) {
       return res.status(400).json({ error: 'Could not extract any text from PDF.' });
     }
@@ -120,8 +128,6 @@ router.post('/pdf', upload.single('file'), async (req, res) => {
           choice3: q.choice3,
           choice4: q.choice4,
           answer: q.answer,
-          fileName,
-          uploadedAt: new Date().toISOString(),
         }))
       )
       .select('id');
