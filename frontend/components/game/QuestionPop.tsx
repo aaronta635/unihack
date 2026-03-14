@@ -269,6 +269,9 @@ type QuestionPopupProps = {
   onClose?: () => void;
 };
 
+/** Persists across Strict Mode remounts so we only send welcome + voice once per question. */
+let lastWelcomeQuestionKey: string | null = null;
+
 export default function QuestionPopup({
   target,
   onAnswer,
@@ -284,15 +287,26 @@ export default function QuestionPopup({
   const [isTutorLoading, setIsTutorLoading] = useState(false);
   const welcomeSentRef = useRef(false);
 
-  const addChatMessage = useCallback((text: string, sender: "user" | "ai") => {
-    setChatMessages((prev) => [
-      ...prev,
-      { id: `msg-${Date.now()}-${prev.length}`, text, sender },
-    ]);
-    if (sender === "ai" && responseMode === "voice") {
-      speakTutorReply({ text, personalityKey });
-    }
-  }, [responseMode, personalityKey]);
+  const addChatMessage = useCallback(
+    (
+      text: string,
+      sender: "user" | "ai",
+      opts?: { skipVoice?: boolean }
+    ) => {
+      setChatMessages((prev) => [
+        ...prev,
+        { id: `msg-${Date.now()}-${prev.length}`, text, sender },
+      ]);
+      if (
+        sender === "ai" &&
+        responseMode === "voice" &&
+        !opts?.skipVoice
+      ) {
+        speakTutorReply({ text, personalityKey });
+      }
+    },
+    [responseMode, personalityKey]
+  );
 
   // Reset chat and welcome when question changes (e.g. next checkpoint)
   useEffect(() => {
@@ -311,12 +325,14 @@ export default function QuestionPopup({
     if (responseMode !== "voice") stopTutorVoice();
   }, [responseMode]);
 
-  // AI welcome when popup opens (once per question) — use personality-flavored message
+  // AI welcome when popup opens (once per question) — always add message; speak only once (avoids double voice in Strict Mode)
   useEffect(() => {
-    if (welcomeSentRef.current) return;
+    const questionKey = question.question ?? "";
+    const alreadySpoke = lastWelcomeQuestionKey === questionKey;
+    if (!alreadySpoke) lastWelcomeQuestionKey = questionKey;
     welcomeSentRef.current = true;
     const messages = getPersonalityFallbackMessages(personalityKey);
-    addChatMessage(messages.welcome, "ai");
+    addChatMessage(messages.welcome, "ai", alreadySpoke ? { skipVoice: true } : undefined);
   }, [question, addChatMessage, personalityKey]);
 
   const handleOptionSelect = useCallback(

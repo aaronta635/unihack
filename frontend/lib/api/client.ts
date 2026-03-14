@@ -14,8 +14,16 @@ import type { School, Course, ScoreEntry } from "@/lib/types/entities";
 /** Toggle: use mock schools/courses/scores for testing. Set false when connecting to real API. */
 const USE_MOCK_ENTITIES = true;
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
+export function getApiBase(): string {
+  const env = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (env) return env;
+  if (typeof window !== "undefined")
+    return `${window.location.protocol}//${window.location.hostname}:3000`;
+  return "http://localhost:3000";
+}
+
+const API_BASE = getApiBase();
+
 /** In-memory list of scores submitted during this session (so leaderboard updates after playing). */
 let mockScoresCreatedThisSession: ScoreEntry[] = [];
 
@@ -153,15 +161,6 @@ const integrations = {
     },
   },
 };
-
-export function getApiBase(): string {
-  const env = process.env.NEXT_PUBLIC_API_URL?.trim();
-  if (env) return env;
-  if (typeof window !== "undefined")
-    return `${window.location.protocol}//${window.location.hostname}:3000`;
-  return "http://localhost:3000";
-}
-const API_BASE = getApiBase();
 
 type TutorChatMessage = { role: "user" | "assistant"; content: string };
 
