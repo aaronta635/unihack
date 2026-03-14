@@ -105,11 +105,13 @@ export default function WeekSelector({
         } else {
           const json = await res.json().catch(() => ({}));
           console.log("Upload OK", json);
+          const inserted = json.insertedCount ?? 0;
+          if (inserted > 0) {
+            setWeekHasQuestions((prev) => ({ ...prev, [weekNum]: true }));
+          }
           alert(
-            `Questions ready for Week ${weekNum} (inserted ${json.insertedCount ?? "?"}).`
+            `Questions ready for Week ${weekNum} (inserted ${inserted || "?"}).`
           );
-          // Optional: reload to refresh any UI state; GamePlay already reads from API.
-          // window.location.reload();
         }
       } finally {
         setUploading(false);
