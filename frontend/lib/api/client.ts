@@ -5,7 +5,8 @@
 
 const auth = {
   async me() {
-    throw Object.assign(new Error("Not authenticated"), { status: 401 });
+    // Stub: always treat as logged in so you can use Dashboard/GamePlay without redirect to landing
+    return { user: { full_name: "Demo User", email: "demo@studyquest.com" }, isAuthenticated: true };
   },
   logout(redirectUrl?: string) {
     if (typeof window !== "undefined") {
