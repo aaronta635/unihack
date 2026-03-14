@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { api } from "@/lib/api/client";
@@ -55,6 +55,10 @@ export default function GamePlay() {
   );
   const questions = weekData?.questions ?? [];
 
+  useEffect(() => {
+    if (courseId && questions.length > 0) window.scrollTo(0, 0);
+  }, [courseId, questions.length]);
+
   const handleComplete = async (finalPts: number, totalQ: number) => {
     setFinalScore({ score: finalPts, total: totalQ });
     setGameState("complete");
@@ -97,9 +101,9 @@ export default function GamePlay() {
   }
 
   return (
-    <div className="fixed inset-0 w-screen h-screen overflow-hidden flex flex-col">
+    <div className="fixed inset-0 top-0 left-0 w-screen h-screen overflow-hidden flex flex-col min-w-0 min-h-0" style={{ top: 0, left: 0, right: 0, bottom: 0 }}>
       <AnimeBackground />
-      <div className="absolute inset-0 flex flex-col">
+      <div className="absolute inset-0 top-0 left-0 flex flex-col min-w-0 min-h-0" style={{ top: 0, left: 0, right: 0, bottom: 0 }}>
         {questions.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -121,12 +125,8 @@ export default function GamePlay() {
             </Button>
           </motion.div>
         ) : gameState === "playing" ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="absolute inset-0 w-full h-full"
-          >
-            {/* Full-screen game canvas */}
+          <>
+            {/* Canvas outside any motion.div so position:fixed is viewport-relative (no transform containing block) */}
             <GameCanvas3D
               questions={questions}
               onComplete={handleComplete}
@@ -134,51 +134,53 @@ export default function GamePlay() {
               playerModelUrl={process.env.NEXT_PUBLIC_PLAYER_MODEL_URL ?? "/model.obj"}
               checkpointModelUrl={process.env.NEXT_PUBLIC_CHECKPOINT_MODEL_URL}
             />
-            {/* Header overlay on top of game */}
+            {/* Header and overlays — in motion for animation only; canvas already full-screen above */}
             <motion.div
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-3 py-2 pointer-events-none"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="absolute inset-0 w-full h-full min-w-0 min-h-0 pointer-events-none"
+              style={{ pointerEvents: 'none' }}
             >
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() =>
-                  courseId
-                    ? router.push(`/Dashboard/course/${courseId}`)
-                    : router.push("/Dashboard")
-                }
-                title="Back to course"
-                aria-label="Back to course"
-                className="pointer-events-auto shrink-0 w-10 h-10 rounded-xl text-white bg-slate-900/60 hover:bg-slate-800/80 border border-pink-500/30 backdrop-blur-xl shadow-lg shadow-pink-500/10"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-              <motion.div
-                className="flex items-center gap-2 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 backdrop-blur-xl rounded-full px-4 py-2 border-2 border-yellow-400/40 shadow-xl shadow-yellow-500/20 pointer-events-auto"
-                animate={{ scale: [1, 1.05, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                <Zap className="w-4 h-4 text-yellow-400" fill="currentColor" />
-                <span className="text-white font-black text-base">{score}</span>
-                <span className="text-yellow-200 text-xs font-bold">POINTS</span>
-              </motion.div>
-              <div className="text-right bg-slate-900/60 backdrop-blur-xl px-3 py-1.5 rounded-lg border border-purple-500/30 shadow-lg shadow-purple-500/10 pointer-events-auto">
-                <p className="text-white font-bold text-xs">{courseCode}</p>
-                <p className="text-purple-300 text-[10px] font-semibold">
-                  Week {weekNumber}
+              <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-3 py-2 pointer-events-none">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() =>
+                    courseId
+                      ? router.push(`/Dashboard/course/${courseId}`)
+                      : router.push("/Dashboard")
+                  }
+                  title="Back to course"
+                  aria-label="Back to course"
+                  className="pointer-events-auto shrink-0 w-10 h-10 rounded-xl text-white bg-slate-900/60 hover:bg-slate-800/80 border border-pink-500/30 backdrop-blur-xl shadow-lg shadow-pink-500/10"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </Button>
+                <motion.div
+                  className="flex items-center gap-2 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 backdrop-blur-xl rounded-full px-4 py-2 border-2 border-yellow-400/40 shadow-xl shadow-yellow-500/20 pointer-events-auto"
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <Zap className="w-4 h-4 text-yellow-400" fill="currentColor" />
+                  <span className="text-white font-black text-base">{score}</span>
+                  <span className="text-yellow-200 text-xs font-bold">POINTS</span>
+                </motion.div>
+                <div className="text-right bg-slate-900/60 backdrop-blur-xl px-3 py-1.5 rounded-lg border border-purple-500/30 shadow-lg shadow-purple-500/10 pointer-events-auto">
+                  <p className="text-white font-bold text-xs">{courseCode}</p>
+                  <p className="text-purple-300 text-[10px] font-semibold">
+                    Week {weekNumber}
+                  </p>
+                </div>
+              </div>
+              <div className="absolute top-12 left-1/2 -translate-x-1/2 z-10 px-4 py-2 rounded-xl bg-slate-900/80 backdrop-blur-xl border border-cyan-500/30 shadow-lg text-center pointer-events-none">
+                <p className="text-cyan-200 text-xs font-semibold">
+                  WASD to move • SPACE at checkpoints
                 </p>
               </div>
             </motion.div>
-            {/* Quest instructions — overlay */}
-            <div className="absolute top-12 left-1/2 -translate-x-1/2 z-10 px-4 py-2 rounded-xl bg-slate-900/80 backdrop-blur-xl border border-cyan-500/30 shadow-lg text-center pointer-events-none">
-              <p className="text-cyan-200 text-xs font-semibold">
-                WASD to move • SPACE at checkpoints
-              </p>
-            </div>
-          </motion.div>
+          </>
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center p-4 z-10">
+          <div className="absolute inset-0 flex items-center justify-center z-10">
             <motion.div
               initial={{ scale: 0.7, opacity: 0, rotateY: -30 }}
               animate={{ scale: 1, opacity: 1, rotateY: 0 }}

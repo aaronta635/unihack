@@ -72,10 +72,19 @@
   --font-mono: var(--font-geist-mono);
 }
 
+html,
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
 body {
   background: hsl(var(--background));
   color: hsl(var(--foreground));
   font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 /* Popup shown after user interacts with a question — layout: top Question+MCQ, bottom AI chat | character */
