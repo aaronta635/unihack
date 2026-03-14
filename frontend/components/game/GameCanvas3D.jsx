@@ -245,7 +245,9 @@ export default function GameCanvas3D({
     if (playerModelUrl) {
       loadModel(playerModelUrl, 3)
         .then((model) => {
-          model.position.y = 0;
+          const box = new THREE.Box3().setFromObject(model);
+          const minY = box.min.y;
+          model.position.y = -minY;
           player.add(model);
         })
         .catch((err) => {
@@ -302,9 +304,19 @@ export default function GameCanvas3D({
     const speed = PLAYER_MOVE_SPEED;
 
     const handleKeyDown = (e) => {
-      keys[e.key.toLowerCase()] = true;
+      const key = e.key.toLowerCase();
+      keys[key] = true;
+      if (e.code) {
+        keys[e.code.toLowerCase()] = true;
+      }
     };
-    const handleKeyUp = (e) => { keys[e.key.toLowerCase()] = false; };
+    const handleKeyUp = (e) => {
+      const key = e.key.toLowerCase();
+      keys[key] = false;
+      if (e.code) {
+        keys[e.code.toLowerCase()] = false;
+      }
+    };
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
@@ -316,10 +328,10 @@ export default function GameCanvas3D({
 
       // Player movement
       velocity.set(0, 0, 0);
-      if (keys['w'] || keys['arrowup']) velocity.z -= speed;
-      if (keys['s'] || keys['arrowdown']) velocity.z += speed;
-      if (keys['a'] || keys['arrowleft']) velocity.x -= speed;
-      if (keys['d'] || keys['arrowright']) velocity.x += speed;
+      if (keys['w'] || keys['arrowup'] || keys['keyw']) velocity.z -= speed;
+      if (keys['s'] || keys['arrowdown'] || keys['keys']) velocity.z += speed;
+      if (keys['a'] || keys['arrowleft'] || keys['keya']) velocity.x -= speed;
+      if (keys['d'] || keys['arrowright'] || keys['keyd']) velocity.x += speed;
 
       if (velocity.length() > 0) {
         velocity.normalize().multiplyScalar(speed);
@@ -327,7 +339,7 @@ export default function GameCanvas3D({
         
         // Face movement direction
         if (velocity.x !== 0 || velocity.z !== 0) {
-          const angle = Math.atan2(velocity.x, velocity.z);
+          const angle = Math.atan2(-velocity.x, -velocity.z);
           player.rotation.y = angle;
         }
 
@@ -429,9 +441,6 @@ export default function GameCanvas3D({
     setCheckpoints(prev => prev.map(cp => 
       cp.id === activeQuestion.id ? { ...cp, answered: true } : cp
     ));
-    
-    // Close popup and allow continued gameplay
-    setActiveQuestion(null);
 
     if (newAnswered >= questions.length) {
       setTimeout(() => onComplete(newScore, questions.length), 500);

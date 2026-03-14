@@ -342,8 +342,7 @@ export default function QuestionPopup({
         addChatMessage(messages.wrong(correctLetter, correctText), "ai");
       }
 
-      const delayMs = 1400;
-      setTimeout(() => onAnswer(isCorrect), delayMs);
+      onAnswer(isCorrect);
     },
     [question, isAnswerRevealed, addChatMessage, onAnswer, personalityKey]
   );
