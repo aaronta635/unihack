@@ -95,98 +95,82 @@ export default function GamePlay() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="fixed inset-0 w-screen h-screen overflow-hidden flex flex-col">
       <AnimeBackground />
-      <div className="relative z-10">
-        <motion.div
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="flex items-center justify-between p-4"
-        >
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push("/Dashboard")}
-            className="text-white bg-slate-900/60 hover:bg-slate-800/80 border border-pink-500/30 backdrop-blur-xl shadow-lg shadow-pink-500/10"
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" /> Back
-          </Button>
+      <div className="absolute inset-0 flex flex-col">
+        {questions.length === 0 ? (
           <motion.div
-            className="flex items-center gap-4"
-            animate={{ scale: [1, 1.05, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative z-20 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 max-w-md text-center mx-auto my-auto"
           >
-            <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 backdrop-blur-xl rounded-full px-5 py-2.5 border-2 border-yellow-400/40 shadow-xl shadow-yellow-500/20">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+            <Sparkles className="w-12 h-12 text-yellow-400/50 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-white mb-2">
+              No Questions Yet
+            </h2>
+            <p className="text-white/40 text-sm mb-6">
+              This week doesn&apos;t have any questions configured yet.
+            </p>
+            <Button
+              onClick={() => router.push("/Dashboard")}
+              className="bg-gradient-to-r from-pink-500 to-purple-600 text-white"
+            >
+              Back to Dashboard
+            </Button>
+          </motion.div>
+        ) : gameState === "playing" ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 w-full h-full"
+          >
+            {/* Full-screen game canvas */}
+            <GameCanvas3D
+              questions={questions}
+              onComplete={handleComplete}
+              onScoreUpdate={setScore}
+            />
+            {/* Header overlay on top of game */}
+            <motion.div
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-3 py-2 pointer-events-none"
+            >
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => router.push("/Dashboard")}
+                title="Back to Dashboard"
+                aria-label="Back to Dashboard"
+                className="pointer-events-auto shrink-0 w-10 h-10 rounded-xl text-white bg-slate-900/60 hover:bg-slate-800/80 border border-pink-500/30 backdrop-blur-xl shadow-lg shadow-pink-500/10"
               >
-                <Zap className="w-5 h-5 text-yellow-400" fill="currentColor" />
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <motion.div
+                className="flex items-center gap-2 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 backdrop-blur-xl rounded-full px-4 py-2 border-2 border-yellow-400/40 shadow-xl shadow-yellow-500/20 pointer-events-auto"
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <Zap className="w-4 h-4 text-yellow-400" fill="currentColor" />
+                <span className="text-white font-black text-base">{score}</span>
+                <span className="text-yellow-200 text-xs font-bold">POINTS</span>
               </motion.div>
-              <span className="text-white font-black text-lg">{score}</span>
-              <span className="text-yellow-200 text-xs font-bold">POINTS</span>
+              <div className="text-right bg-slate-900/60 backdrop-blur-xl px-3 py-1.5 rounded-lg border border-purple-500/30 shadow-lg shadow-purple-500/10 pointer-events-auto">
+                <p className="text-white font-bold text-xs">{courseCode}</p>
+                <p className="text-purple-300 text-[10px] font-semibold">
+                  Week {weekNumber}
+                </p>
+              </div>
+            </motion.div>
+            {/* Quest instructions — overlay */}
+            <div className="absolute top-12 left-1/2 -translate-x-1/2 z-10 px-4 py-2 rounded-xl bg-slate-900/80 backdrop-blur-xl border border-cyan-500/30 shadow-lg text-center pointer-events-none">
+              <p className="text-cyan-200 text-xs font-semibold">
+                WASD to move • SPACE at checkpoints
+              </p>
             </div>
           </motion.div>
-          <div className="text-right bg-slate-900/60 backdrop-blur-xl px-4 py-2 rounded-xl border border-purple-500/30 shadow-lg shadow-purple-500/10">
-            <p className="text-white font-bold text-sm">{courseCode}</p>
-            <p className="text-purple-300 text-xs font-semibold">
-              Week {weekNumber}
-            </p>
-          </div>
-        </motion.div>
-        <div className="flex items-center justify-center p-4 pb-24 md:pb-8">
-          {questions.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 max-w-md text-center"
-            >
-              <Sparkles className="w-12 h-12 text-yellow-400/50 mx-auto mb-4" />
-              <h2 className="text-xl font-bold text-white mb-2">
-                No Questions Yet
-              </h2>
-              <p className="text-white/40 text-sm mb-6">
-                This week doesn&apos;t have any questions configured yet.
-              </p>
-              <Button
-                onClick={() => router.push("/Dashboard")}
-                className="bg-gradient-to-r from-pink-500 to-purple-600 text-white"
-              >
-                Back to Dashboard
-              </Button>
-            </motion.div>
-          ) : gameState === "playing" ? (
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-            >
-              <motion.div
-                className="mb-4 text-center bg-slate-900/70 backdrop-blur-xl px-6 py-3 rounded-2xl border border-cyan-500/30 shadow-xl shadow-cyan-500/10 mx-auto max-w-xl"
-                animate={{
-                  borderColor: [
-                    "rgba(6, 182, 212, 0.3)",
-                    "rgba(236, 72, 153, 0.3)",
-                    "rgba(6, 182, 212, 0.3)",
-                  ],
-                }}
-                transition={{ duration: 3, repeat: Infinity }}
-              >
-                <p className="text-white font-bold text-sm mb-1 flex items-center justify-center gap-2">
-                  <Sparkles className="w-4 h-4 text-yellow-400" />
-                  Quest Instructions
-                  <Sparkles className="w-4 h-4 text-yellow-400" />
-                </p>
-                <p className="text-cyan-200 text-xs font-semibold">
-                  Use WASD to explore • Walk to checkpoints and press SPACE!
-                </p>
-              </motion.div>
-              <GameCanvas3D
-                questions={questions}
-                onComplete={handleComplete}
-                onScoreUpdate={setScore}
-              />
-            </motion.div>
-          ) : (
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center p-4 z-10">
             <motion.div
               initial={{ scale: 0.7, opacity: 0, rotateY: -30 }}
               animate={{ scale: 1, opacity: 1, rotateY: 0 }}
@@ -246,8 +230,8 @@ export default function GamePlay() {
                 </Button>
               </div>
             </motion.div>
+          </div>
           )}
-        </div>
       </div>
     </div>
   );

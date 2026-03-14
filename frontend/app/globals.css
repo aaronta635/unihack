@@ -77,3 +77,20 @@ body {
   color: hsl(var(--foreground));
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Popup shown after user interacts with a question — layout: top Question+MCQ, bottom AI chat | character */
+.popup-after-interact {
+  /* Size overrides: width/height set via Tailwind in component */
+}
+.popup-after-interact__body {
+  /* Vertical: row1 = Question+MCQ (40%), row2 = AI chat | anime character (60%) */
+}
+.popup-after-interact__mcq {
+  /* Top section: question + options (full width) */
+}
+.popup-after-interact__chat-area {
+  /* Bottom row: AI chat (left) + character (right) */
+}
+.popup-after-interact__character {
+  /* Bottom-right: anime character (narrow, rounded) */
+}

@@ -1,12 +1,28 @@
 /**
  * API client for auth, entities, and integrations.
- * Stub implementation — replace with real backend (REST, etc.) when your DB is ready.
+ * When USE_MOCK_ENTITIES is true, entities use test data so you can play the game without a backend.
+ * Set to false and replace entity implementations with real fetch() calls when your API/DB is ready.
  */
+
+import {
+  MOCK_SCHOOLS,
+  MOCK_COURSES,
+  MOCK_SCORES,
+} from "@/lib/testData/mockEntities";
+import type { School, Course, ScoreEntry } from "@/lib/types/entities";
+
+/** Toggle: use mock schools/courses/scores for testing. Set false when connecting to real API. */
+const USE_MOCK_ENTITIES = true;
+
+/** In-memory list of scores submitted during this session (so leaderboard updates after playing). */
+let mockScoresCreatedThisSession: ScoreEntry[] = [];
 
 const auth = {
   async me() {
-    // Stub: always treat as logged in so you can use Dashboard/GamePlay without redirect to landing
-    return { user: { full_name: "Demo User", email: "demo@studyquest.com" }, isAuthenticated: true };
+    return {
+      user: { full_name: "Demo User", email: "demo@studyquest.com" },
+      isAuthenticated: true,
+    };
   },
   logout(redirectUrl?: string) {
     if (typeof window !== "undefined") {
@@ -26,15 +42,49 @@ const auth = {
 };
 
 const entities = {
-  School: { list: () => Promise.resolve([]) },
+  School: {
+    list: (): Promise<School[]> =>
+      USE_MOCK_ENTITIES
+        ? Promise.resolve(MOCK_SCHOOLS)
+        : Promise.resolve([]),
+  },
   Course: {
-    list: () => Promise.resolve([]),
-    filter: (_params?: { id?: string | null }) => Promise.resolve([]),
+    list: (): Promise<Course[]> =>
+      USE_MOCK_ENTITIES
+        ? Promise.resolve(MOCK_COURSES)
+        : Promise.resolve([]),
+    filter: (params?: { id?: string | null }): Promise<Course[]> => {
+      if (!USE_MOCK_ENTITIES) return Promise.resolve([]);
+      if (!params?.id) return Promise.resolve(MOCK_COURSES);
+      const found = MOCK_COURSES.filter((c) => c.id === params.id);
+      return Promise.resolve(found);
+    },
     update: (_id?: string, _data?: unknown) => Promise.resolve(),
   },
   Score: {
-    list: (_order?: string, _limit?: number) => Promise.resolve([]),
-    create: (_data?: Record<string, unknown>) => Promise.resolve(),
+    list: (_order?: string, _limit?: number): Promise<ScoreEntry[]> => {
+      if (!USE_MOCK_ENTITIES) return Promise.resolve([]);
+      const combined = [...mockScoresCreatedThisSession, ...MOCK_SCORES];
+      combined.sort((a, b) => b.score - a.score);
+      return Promise.resolve(combined);
+    },
+    create: (data?: Record<string, unknown>) => {
+      if (USE_MOCK_ENTITIES && data) {
+        const newEntry: ScoreEntry = {
+          id: `mock-${Date.now()}`,
+          player_name: (data.player_name as string) ?? "Anonymous",
+          player_email: (data.player_email as string) ?? "",
+          course_id: data.course_id as string | undefined,
+          course_title: (data.course_title as string) ?? undefined,
+          week_number: (data.week_number as number) ?? undefined,
+          score: (data.score as number) ?? 0,
+          total_questions: (data.total_questions as number) ?? undefined,
+          time_taken_seconds: (data.time_taken_seconds as number) ?? undefined,
+        };
+        mockScoresCreatedThisSession.push(newEntry);
+      }
+      return Promise.resolve();
+    },
   },
 };
 
@@ -42,7 +92,9 @@ const integrations = {
   Core: {
     UploadFile: ({ file }: { file: File }) => {
       const url =
-        typeof window !== "undefined" && file ? URL.createObjectURL(file) : "#";
+        typeof window !== "undefined" && file
+          ? URL.createObjectURL(file)
+          : "#";
       return Promise.resolve({ file_url: url });
     },
   },
