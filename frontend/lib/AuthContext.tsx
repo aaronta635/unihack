@@ -30,11 +30,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoadingAuth(true);
       setAuthError(null);
-      const { user: currentUser, isAuthenticated: authenticated } = await api.auth.me();
-      setUser(currentUser ?? null);
-      setIsAuthenticated(!!authenticated);
+      const currentUser = await api.auth.me();
+      setUser(currentUser);
+      setIsAuthenticated(true);
     } catch {
-      setUser(null);
       setIsAuthenticated(false);
       setAuthError({ type: "auth_required", message: "Authentication required" });
     } finally {
