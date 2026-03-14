@@ -63,7 +63,7 @@ export default function Home() {
                   <Gamepad2 className="w-12 h-12 text-white" />
                 </div>
               </motion.div>
-              <h1 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-600 via-rose-600 to-orange-600 mb-3 drop-shadow-lg">
+              <h1 className="text-5xl md:text-6xl font-black text-[#4a2b3e] mb-3 drop-shadow-lg">
                 StudyQuest
               </h1>
               <p className="text-slate-700 text-lg font-semibold">
@@ -115,18 +115,18 @@ export default function Home() {
             </motion.div>
           </motion.div>
         ) : (
-          <motion.div
-            key="auth"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="relative z-10 max-w-md w-full mx-4"
-          >
-            <div className="bg-white/90 backdrop-blur-2xl border-4 border-pink-300 rounded-3xl p-8 shadow-2xl shadow-pink-500/30">
+            <motion.div
+              key="auth"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="relative z-10 max-w-md w-full mx-4"
+            >
+              <div className="bg-gradient-to-br from-[#ffe6f0]/95 via-[#ffd6e8]/95 to-[#ffe6de]/95 backdrop-blur-2xl rounded-3xl p-8 shadow-2xl shadow-pink-300/60 border border-[#ffb3c6]/80">
               <div className="text-center mb-6">
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-pink-500 via-purple-500 to-cyan-500 flex items-center justify-center shadow-xl shadow-purple-500/30 mx-auto mb-4">
                   <Gamepad2 className="w-8 h-8 text-white" />
                 </div>
-                <h2 className="text-2xl font-black text-slate-800 mb-1">
+                <h2 className="text-2xl font-black text-[#4a2b3e] mb-1">
                   {mode === "login" ? "Welcome Back!" : "Join StudyQuest"}
                 </h2>
                 <p className="text-slate-600 text-sm font-semibold">
