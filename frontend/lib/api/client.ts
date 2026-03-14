@@ -24,69 +24,20 @@ export function getApiBase(): string {
 
 const API_BASE = getApiBase();
 
-const AUTH_TOKEN_KEY = "access_token";
-const AUTH_REFRESH_KEY = "refresh_token";
-
 /** In-memory list of scores submitted during this session (so leaderboard updates after playing). */
 let mockScoresCreatedThisSession: ScoreEntry[] = [];
 
 const auth = {
-  async me(): Promise<{ user: { id?: string; email?: string; user_metadata?: { full_name?: string }; [k: string]: unknown } | null; isAuthenticated: boolean }> {
-    if (typeof window === "undefined") return { user: null, isAuthenticated: false };
-    const token = window.localStorage.getItem(AUTH_TOKEN_KEY);
-    if (!token) return { user: null, isAuthenticated: false };
-    try {
-      const res = await fetch(`${API_BASE}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
-      if (!res.ok) {
-        window.localStorage.removeItem(AUTH_TOKEN_KEY);
-        window.localStorage.removeItem(AUTH_REFRESH_KEY);
-        return { user: null, isAuthenticated: false };
-      }
-      const json = await res.json();
-      return { user: json.user ?? null, isAuthenticated: !!json.user };
-    } catch {
-      return { user: null, isAuthenticated: false };
-    }
-  },
-  async login(email: string, password: string): Promise<{ user: unknown; error?: string }> {
-    try {
-      const res = await fetch(`${API_BASE}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) return { user: null, error: data.error ?? "Login failed" };
-      const token = data.session?.access_token ?? data.access_token;
-      const refresh = data.session?.refresh_token ?? data.refresh_token;
-      if (token && typeof window !== "undefined") {
-        window.localStorage.setItem(AUTH_TOKEN_KEY, token);
-        if (refresh) window.localStorage.setItem(AUTH_REFRESH_KEY, refresh);
-      }
-      return { user: data.user ?? data };
-    } catch (err) {
-      return { user: null, error: err instanceof Error ? err.message : "Login failed" };
-    }
-  },
-  async signup(email: string, password: string, display_name?: string): Promise<{ user: unknown; error?: string }> {
-    try {
-      const res = await fetch(`${API_BASE}/auth/signup`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, display_name: display_name || undefined }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) return { user: null, error: data.error ?? "Signup failed" };
-      return { user: data.user ?? data };
-    } catch (err) {
-      return { user: null, error: err instanceof Error ? err.message : "Signup failed" };
-    }
+  async me() {
+    return {
+      user: { full_name: "Demo User", email: "demo@studyquest.com" },
+      isAuthenticated: true,
+    };
   },
   logout(redirectUrl?: string) {
     if (typeof window !== "undefined") {
       window.localStorage.removeItem("app_access_token");
-      window.localStorage.removeItem(AUTH_TOKEN_KEY);
-      window.localStorage.removeItem(AUTH_REFRESH_KEY);
+      window.localStorage.removeItem("access_token");
       if (redirectUrl) window.location.href = redirectUrl;
     }
   },

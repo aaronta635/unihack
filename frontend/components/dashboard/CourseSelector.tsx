@@ -18,10 +18,10 @@ export default function CourseSelector({
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#ffc5d0] to-[#ff8a8a] flex items-center justify-center">
           <BookOpen className="w-4 h-4 text-white" />
         </div>
-        <h2 className="text-lg font-bold text-slate-700">Courses</h2>
+        <h2 className="text-lg font-bold text-[#4a2b3e]">Courses</h2>
       </div>
       <ScrollArea className="flex-1">
         <div className="space-y-2 pr-2">
@@ -34,22 +34,22 @@ export default function CourseSelector({
               onClick={() => onSelect(course)}
               className={`w-full text-left p-3 rounded-xl transition-all duration-200 group flex items-center justify-between ${
                 selectedCourse?.id === course.id
-                  ? "bg-gradient-to-r from-orange-100 to-pink-100 border-2 border-orange-400 shadow-lg"
-                  : "bg-slate-200/60 hover:bg-slate-300/60 border-2 border-slate-300 hover:border-orange-300"
+                  ? "bg-gradient-to-r from-[#ffb3c6]/90 to-[#ffc5d0]/90 border-2 border-[#ff8fb1] shadow-lg"
+                  : "bg-[#ffe6f0]/70 hover:bg-[#ffd6e8]/80 border-2 border-[#ffd6e8] hover:border-[#ff8fb1]"
               }`}
             >
               <div>
                 <p
-                  className={`font-semibold text-sm ${selectedCourse?.id === course.id ? "text-orange-800" : "text-slate-700"}`}
+                  className={`font-semibold text-sm ${selectedCourse?.id === course.id ? "text-[#c2185b]" : "text-[#4a2b3e]"}`}
                 >
                   {course.code}
                 </p>
-                <p className="text-xs text-slate-600 mt-0.5 font-medium">
+                <p className="text-xs text-[#8b5a7a] mt-0.5 font-medium">
                   {course.title}
                 </p>
               </div>
               <ChevronRight
-                className={`w-4 h-4 transition-transform ${selectedCourse?.id === course.id ? "text-orange-600 translate-x-0" : "text-slate-400 -translate-x-2 group-hover:translate-x-0 group-hover:text-orange-500"}`}
+                className={`w-4 h-4 transition-transform ${selectedCourse?.id === course.id ? "text-[#c2185b] translate-x-0" : "text-[#b66d94] -translate-x-2 group-hover:translate-x-0 group-hover:text-[#c2185b]"}`}
               />
             </motion.button>
           ))}
