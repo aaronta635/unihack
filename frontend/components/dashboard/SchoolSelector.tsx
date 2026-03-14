@@ -18,10 +18,10 @@ export default function SchoolSelector({
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#ffc5d0] via-[#ff8a8a] to-[#6b5bff] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
           <GraduationCap className="w-4 h-4 text-white" />
         </div>
-        <h2 className="text-lg font-bold text-[#4a2b3e]">Universities</h2>
+        <h2 className="text-lg font-bold text-slate-700">Universities</h2>
       </div>
       <ScrollArea className="flex-1">
         <div className="space-y-3 pr-2">
@@ -34,8 +34,8 @@ export default function SchoolSelector({
               onClick={() => onSelect(school)}
               className={`w-full text-left p-4 rounded-xl transition-all duration-200 group flex items-center justify-between ${
                 selectedSchool?.id === school.id
-                  ? "bg-gradient-to-r from-[#ffb3c6]/90 to-[#ffc5d0]/90 border border-[#ff8fb1] shadow-lg"
-                  : "bg-white/70 hover:bg-[#ffe6f0] border border-[#ffd6e8] hover:border-[#ff8fb1]"
+                  ? "bg-gradient-to-r from-pink-100 to-rose-100 border-2 border-pink-400 shadow-lg"
+                  : "bg-slate-200/60 hover:bg-slate-300/60 border-2 border-slate-300 hover:border-pink-300"
               }`}
             >
               <div className="flex items-center gap-3">
@@ -46,29 +46,25 @@ export default function SchoolSelector({
                     className="w-10 h-10 rounded-lg object-cover"
                   />
                 ) : (
-                  <div className="w-10 h-10 rounded-lg bg-[#ffe6f0] border border-[#ffb3c6] flex items-center justify-center">
-                    <span className="text-[#4a2b3e] font-bold text-sm">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">
                       {school.code}
                     </span>
                   </div>
                 )}
                 <div>
                   <p
-                    className={`font-semibold text-sm ${
-                      selectedSchool?.id === school.id
-                        ? "text-[#c2185b]"
-                        : "text-[#4a2b3e]"
-                    }`}
+                    className={`font-semibold text-sm ${selectedSchool?.id === school.id ? "text-pink-800" : "text-slate-700"}`}
                   >
                     {school.name}
                   </p>
-                  <p className="text-xs text-[#8b5a7a] mt-0.5 font-medium">
+                  <p className="text-xs text-slate-600 mt-0.5 font-medium">
                     {school.code}
                   </p>
                 </div>
               </div>
               <ChevronRight
-                className={`w-4 h-4 transition-transform ${selectedSchool?.id === school.id ? "text-[#ff4d4d] translate-x-0" : "text-[#6e6e6e] -translate-x-2 group-hover:translate-x-0 group-hover:text-[#ff4d4d]"}`}
+                className={`w-4 h-4 transition-transform ${selectedSchool?.id === school.id ? "text-pink-600 translate-x-0" : "text-slate-400 -translate-x-2 group-hover:translate-x-0 group-hover:text-pink-500"}`}
               />
             </motion.button>
           ))}

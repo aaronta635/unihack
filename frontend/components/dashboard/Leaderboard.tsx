@@ -6,22 +6,22 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 const rankStyles = [
   {
-    bg: "from-[#ffb3c6] to-[#ffc5d0]",
-    border: "border-[#ff8fb1]/70",
+    bg: "from-amber-100 to-yellow-100",
+    border: "border-amber-300",
     icon: Crown,
-    iconColor: "text-[#c2185b]",
+    iconColor: "text-slate-800",
   },
   {
-    bg: "from-[#ffe6f0] to-[#ffe6de]",
-    border: "border-[#ffd6e8]/80",
+    bg: "from-slate-100 to-slate-50",
+    border: "border-slate-300",
     icon: Medal,
-    iconColor: "text-[#ff8fb1]",
+    iconColor: "text-slate-800",
   },
   {
-    bg: "from-[#ffe6de] to-[#e0f7ff]",
-    border: "border-[#ffb3c6]/60",
+    bg: "from-orange-100 to-amber-100",
+    border: "border-orange-300",
     icon: Medal,
-    iconColor: "text-[#ffb199]",
+    iconColor: "text-slate-800",
   },
 ];
 
@@ -40,20 +40,20 @@ export default function Leaderboard({ scores }: { scores: Score[] }) {
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#ffc5d0] via-[#ff8a8a] to-[#6b5bff] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-500 to-orange-600 flex items-center justify-center">
           <Trophy className="w-4 h-4 text-white" />
         </div>
-        <h2 className="text-lg font-bold text-[#4a2b3e]">Leaderboard</h2>
+        <h2 className="text-lg font-bold text-slate-900">Leaderboard</h2>
       </div>
       <ScrollArea className="flex-1">
         <div className="space-y-2 pr-2">
           {sorted.length === 0 && (
-            <div className="text-center py-8">
-              <Star className="w-8 h-8 text-[#c2185b]/60 mx-auto mb-2" />
-              <p className="text-[#4a2b3e] text-sm font-semibold">
+            <div className="text-center py-8 bg-amber-50/80 rounded-xl border border-amber-200">
+              <Star className="w-8 h-8 text-amber-600 mx-auto mb-2" />
+              <p className="text-slate-800 text-sm font-semibold">
                 No scores yet
               </p>
-              <p className="text-[#8b5a7a] text-xs font-medium">
+              <p className="text-slate-600 text-xs font-medium">
                 Play a game to get on the board!
               </p>
             </div>
@@ -70,34 +70,34 @@ export default function Leaderboard({ scores }: { scores: Score[] }) {
                 className={`p-3 rounded-xl flex items-center gap-3 ${
                   style
                     ? `bg-gradient-to-r ${style.bg} border ${style.border}`
-                    : "bg-gradient-to-r from-[#ffe6f0] to-[#ffe6de] border border-[#ffd6e8]"
+                    : "bg-slate-100 border border-slate-200"
                 }`}
               >
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center ${
                     style
-                      ? "bg-[#3b2a26]/80"
-                      : "bg-[#4a3832]/80"
+                      ? `${(style.bg as string).replace("from-", "bg-").split(" ")[0]}`
+                      : "bg-slate-200"
                   }`}
                 >
                   {RankIcon ? (
                     <RankIcon className={`w-4 h-4 ${style.iconColor}`} />
                   ) : (
-                    <span className="text-xs font-bold text-[#f5f5f5]">
+                    <span className="text-xs font-bold text-slate-900">
                       {i + 1}
                     </span>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-[#4a2b3e] truncate">
+                  <p className="text-sm font-semibold text-slate-900 truncate">
                     {score.player_name}
                   </p>
-                  <p className="text-xs text-[#8b5a7a] font-medium">
+                  <p className="text-xs text-slate-800 font-medium">
                     {score.course_title ?? "—"} • Week {score.week_number ?? "—"}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-black text-[#4a2b3e]">
+                  <p className="text-lg font-black text-slate-900">
                     {score.score}
                   </p>
                 </div>
