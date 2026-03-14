@@ -8,12 +8,10 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const uploadRouter = require('./routes/upload');
 
-require('dotenv').config(); 
-
-
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
 const authRouter = require('./routes/auth');
+const scoresRouter = require('./routes/scores');
 const swaggerJSDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 
@@ -38,6 +36,7 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/auth', authRouter);
 app.use('/upload', uploadRouter);
+app.use('/api', scoresRouter);
 
 const swaggerSpec = swaggerJSDoc({
   definition: {
