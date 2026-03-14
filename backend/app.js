@@ -4,8 +4,11 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
+require('dotenv').config(); // add this near the top
+
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+var pdfRouter = require('./routes/pdf'); // add this
 
 var app = express();
 
@@ -19,8 +22,12 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.get('/api/health', function (req, res) {
+  res.json({ ok: true, message: 'API is up', timestamp: new Date().toISOString() });
+});
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+app.use('/api', pdfRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
