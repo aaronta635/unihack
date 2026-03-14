@@ -56,8 +56,8 @@ export default function GameCanvas3D({ questions, onComplete, onScoreUpdate }) {
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     const setSize = () => {
-      const w = currentMount.clientWidth || 800;
-      const h = currentMount.clientHeight || 450;
+      const w = typeof window !== 'undefined' ? window.innerWidth : (currentMount?.clientWidth || 800);
+      const h = typeof window !== 'undefined' ? window.innerHeight : (currentMount?.clientHeight || 450);
       renderer.setSize(w, h);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       camera.aspect = w / h;
@@ -65,8 +65,12 @@ export default function GameCanvas3D({ questions, onComplete, onScoreUpdate }) {
     };
     setSize();
     currentMount.appendChild(renderer.domElement);
+    renderer.domElement.style.display = 'block';
     const resizeObserver = new ResizeObserver(setSize);
     resizeObserver.observe(currentMount);
+    const onWindowResize = () => setSize();
+    window.addEventListener('resize', onWindowResize);
+    const timeouts = [0, 50, 150, 400].map((ms) => setTimeout(setSize, ms));
 
     // Lights
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -286,7 +290,9 @@ export default function GameCanvas3D({ questions, onComplete, onScoreUpdate }) {
 
     // Cleanup
     return () => {
+      timeouts.forEach((id) => clearTimeout(id));
       cancelAnimationFrame(animationId);
+      window.removeEventListener('resize', onWindowResize);
       resizeObserver.disconnect();
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
@@ -333,8 +339,8 @@ export default function GameCanvas3D({ questions, onComplete, onScoreUpdate }) {
   };
 
   return (
-    <div className="absolute inset-0 w-full h-full">
-      <div ref={mountRef} className="w-full h-full overflow-hidden" />
+    <div className="fixed inset-0 top-0 left-0 w-screen h-screen min-h-screen min-w-0" style={{ minHeight: '100dvh' }}>
+      <div ref={mountRef} className="absolute inset-0 top-0 left-0 w-full h-full overflow-hidden" style={{ top: 0, left: 0, right: 0, bottom: 0 }} />
       
       {/* Controls UI — raised so not cut off at bottom */}
       <div className="absolute bottom-6 left-4 max-w-[200px] bg-black/70 text-white px-3 py-2.5 rounded-lg text-xs">
