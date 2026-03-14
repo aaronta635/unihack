@@ -67,13 +67,13 @@ function McqSection({
           </p>
         </div>
       </div>
-      <div className="space-y-2 flex-1 min-h-0">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-1 min-h-0 content-start">
         {optionLabels.map((optionText, optionIndex) => (
           <motion.button
             key={optionIndex}
             onClick={() => onOptionSelect(optionIndex)}
             disabled={isAnswerRevealed}
-            whileHover={{ scale: isAnswerRevealed ? 1 : 1.02, x: 4 }}
+            whileHover={{ scale: isAnswerRevealed ? 1 : 1.02 }}
             whileTap={{ scale: 0.98 }}
             className={`w-full text-left py-3 px-4 rounded-xl border-2 text-sm font-bold transition-all duration-300 ${getOptionButtonStyle(
               optionIndex
@@ -123,11 +123,13 @@ function McqSection({
 /** Props for the AI chat (bottom-left, learning-from-AI style). */
 type AiChatSectionProps = {
   messages: ChatMessage[];
+  onSendUserMessage: (text: string) => void;
 };
 
 /** AI chat area: bottom row left, scrollable, user vs AI bubbles. */
-function AiChatSection({ messages }: AiChatSectionProps) {
+function AiChatSection({ messages, onSendUserMessage }: AiChatSectionProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [inputValue, setInputValue] = useState("");
 
   useEffect(() => {
     scrollRef.current?.scrollTo({
@@ -135,6 +137,14 @@ function AiChatSection({ messages }: AiChatSectionProps) {
       behavior: "smooth",
     });
   }, [messages.length]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = inputValue.trim();
+    if (!trimmed) return;
+    onSendUserMessage(trimmed);
+    setInputValue("");
+  };
 
   return (
     <div className="relative z-10 flex flex-col h-full min-w-0 rounded-2xl border-2 border-slate-600/50 bg-slate-900/70 overflow-hidden">
@@ -184,6 +194,24 @@ function AiChatSection({ messages }: AiChatSectionProps) {
           ))
         )}
       </div>
+      <form
+        onSubmit={handleSubmit}
+        className="flex items-center gap-2 px-3 py-2 border-t border-slate-700/60 bg-slate-900/80 shrink-0"
+      >
+        <input
+          type="text"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          placeholder="Ask a follow-up or type your thoughts..."
+          className="flex-1 rounded-lg bg-slate-800/80 border border-slate-600/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/60 focus:border-cyan-500/80"
+        />
+        <button
+          type="submit"
+          className="px-3 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-xs font-bold text-slate-900 border border-cyan-300/80 transition-colors"
+        >
+          Send
+        </button>
+      </form>
     </div>
   );
 }
@@ -353,7 +381,10 @@ export default function QuestionPopup({
           <div className="popup-after-interact__chat-area flex-1 flex gap-4 min-h-0">
             <div className="flex-1 flex flex-col min-w-0 min-h-0">
               <TutorControlsRow />
-              <AiChatSection messages={chatMessages} />
+              <AiChatSection
+                messages={chatMessages}
+                onSendUserMessage={(text) => addChatMessage(text, "user")}
+              />
             </div>
             <div className="popup-after-interact__character w-32 flex-shrink-0 flex flex-col min-h-0">
               <CharacterPlaceholder />

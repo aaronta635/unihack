@@ -2,7 +2,114 @@
 import { useRef, useEffect, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 import QuestionPopup from './QuestionPop';
+
+const TREE_POSITIONS = [
+  [-30, -20], [28, -22], [-32, 18], [30, 20],
+  [-20, -30], [22, -15], [-25, 28], [20, 30],
+  [0, -35], [-35, 0], [35, 0], [0, 35],
+];
+
+/** Movement speed (units per frame). Increase for faster movement. */
+const PLAYER_MOVE_SPEED = 0.28;
+
+function addDefaultPlayerMeshes(player) {
+  // Kimono body
+  const kimonoGeometry = new THREE.CylinderGeometry(0.7, 1, 2.5, 8);
+  const kimonoMaterial = new THREE.MeshStandardMaterial({
+    color: 0xE040FB,
+    roughness: 0.6,
+    metalness: 0.1,
+  });
+  const kimono = new THREE.Mesh(kimonoGeometry, kimonoMaterial);
+  kimono.position.y = 1.5;
+  kimono.castShadow = true;
+  player.add(kimono);
+
+  // Obi belt
+  const obiGeometry = new THREE.CylinderGeometry(0.75, 0.75, 0.4, 8);
+  const obiMaterial = new THREE.MeshStandardMaterial({
+    color: 0xFF6B9D,
+    roughness: 0.5,
+  });
+  const obi = new THREE.Mesh(obiGeometry, obiMaterial);
+  obi.position.y = 1.8;
+  player.add(obi);
+
+  // Player head
+  const headGeometry = new THREE.SphereGeometry(0.4, 16, 16);
+  const headMaterial = new THREE.MeshStandardMaterial({
+    color: 0xFFDBAC,
+    roughness: 0.6,
+  });
+  const head = new THREE.Mesh(headGeometry, headMaterial);
+  head.position.y = 3;
+  head.castShadow = true;
+  player.add(head);
+
+  // Hair (black)
+  const hairGeometry = new THREE.SphereGeometry(0.45, 16, 16);
+  const hairMaterial = new THREE.MeshStandardMaterial({
+    color: 0x1A1A1A,
+    roughness: 0.7,
+  });
+  const hair = new THREE.Mesh(hairGeometry, hairMaterial);
+  hair.position.y = 3.2;
+  hair.scale.set(1, 0.8, 1);
+  player.add(hair);
+}
+
+/**
+ * Load a 3D model from URL (GLB/GLTF or OBJ). Returns a Group.
+ * For OBJ, loads materials.mtl from the same directory if present (e.g. /model.obj → /materials.mtl).
+ * @param {string} url - Path e.g. /models/tree.glb or /model.obj
+ * @param {number} maxDimension - Scale so model's max size is this (default 7 for trees).
+ */
+function loadModel(url, maxDimension = 7) {
+  const lower = url.toLowerCase();
+  const isObj = lower.endsWith('.obj');
+  return new Promise((resolve, reject) => {
+    const applyScaleAndShadows = (group) => {
+      const box = new THREE.Box3().setFromObject(group);
+      const size = new THREE.Vector3();
+      box.getSize(size);
+      const maxDim = Math.max(size.x, size.y, size.z) || 1;
+      const scale = maxDimension / maxDim;
+      group.scale.setScalar(scale);
+      group.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+      resolve(group);
+    };
+    if (isObj) {
+      const basePath = url.includes('/') ? url.slice(0, url.lastIndexOf('/') + 1) : '';
+      const mtlUrl = basePath + 'materials.mtl';
+      const objLoader = new OBJLoader();
+      const mtlLoader = new MTLLoader();
+      mtlLoader.load(
+        mtlUrl,
+        (materials) => {
+          materials.preload();
+          objLoader.setMaterials(materials);
+          objLoader.load(url, applyScaleAndShadows, undefined, reject);
+        },
+        undefined,
+        () => {
+          objLoader.load(url, applyScaleAndShadows, undefined, reject);
+        }
+      );
+    } else {
+      const loader = new GLTFLoader();
+      loader.load(url, ({ scene }) => applyScaleAndShadows(scene), undefined, reject);
+    }
+  });
+}
 
 function generateCheckpoints(questions) {
   const checkpoints = [];
@@ -24,7 +131,15 @@ function generateCheckpoints(questions) {
   return checkpoints;
 }
 
-export default function GameCanvas3D({ questions, onComplete, onScoreUpdate }) {
+export default function GameCanvas3D({
+  questions,
+  onComplete,
+  onScoreUpdate,
+  /** Optional: path to GLB/GLTF or OBJ model for the player (e.g. /model.obj for Pikachu). */
+  playerModelUrl,
+  /** Optional: path to GLB/GLTF or OBJ model for checkpoints (e.g. /models/checkpoint.glb). */
+  checkpointModelUrl,
+}) {
   const mountRef = useRef(null);
   const [checkpoints, setCheckpoints] = useState(() => generateCheckpoints(questions));
   const [activeQuestion, setActiveQuestion] = useState(null);
@@ -106,14 +221,8 @@ export default function GameCanvas3D({ questions, onComplete, onScoreUpdate }) {
     gridHelper.position.y = 0.1;
     scene.add(gridHelper);
 
-    // Cherry blossom trees and traditional structures
-    const treePositions = [
-      [-30, -20], [28, -22], [-32, 18], [30, 20],
-      [-20, -30], [22, -15], [-25, 28], [20, 30],
-      [0, -35], [-35, 0], [35, 0], [0, 35],
-    ];
-    
-    treePositions.forEach(([x, z]) => {
+    // Trees: always procedural cherry trees (keep environment consistent)
+    TREE_POSITIONS.forEach(([x, z]) => {
       const tree = createCherryTree();
       tree.position.set(x, 0, z);
       scene.add(tree);
@@ -127,75 +236,66 @@ export default function GameCanvas3D({ questions, onComplete, onScoreUpdate }) {
       scene.add(torii);
     });
 
-    // Player character - kimono style
+    // Player character - use custom model if provided, else kimono style
     const player = new THREE.Group();
-    
-    // Kimono body
-    const kimonoGeometry = new THREE.CylinderGeometry(0.7, 1, 2.5, 8);
-    const kimonoMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0xE040FB,
-      roughness: 0.6,
-      metalness: 0.1,
-    });
-    const kimono = new THREE.Mesh(kimonoGeometry, kimonoMaterial);
-    kimono.position.y = 1.5;
-    kimono.castShadow = true;
-    player.add(kimono);
-
-    // Obi belt
-    const obiGeometry = new THREE.CylinderGeometry(0.75, 0.75, 0.4, 8);
-    const obiMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0xFF6B9D,
-      roughness: 0.5,
-    });
-    const obi = new THREE.Mesh(obiGeometry, obiMaterial);
-    obi.position.y = 1.8;
-    player.add(obi);
-
-    // Player head
-    const headGeometry = new THREE.SphereGeometry(0.4, 16, 16);
-    const headMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0xFFDBAC,
-      roughness: 0.6,
-    });
-    const head = new THREE.Mesh(headGeometry, headMaterial);
-    head.position.y = 3;
-    head.castShadow = true;
-    player.add(head);
-    
-    // Hair (black)
-    const hairGeometry = new THREE.SphereGeometry(0.45, 16, 16);
-    const hairMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0x1A1A1A,
-      roughness: 0.7,
-    });
-    const hair = new THREE.Mesh(hairGeometry, hairMaterial);
-    hair.position.y = 3.2;
-    hair.scale.set(1, 0.8, 1);
-    player.add(hair);
+    if (playerModelUrl) {
+      loadModel(playerModelUrl, 3)
+        .then((model) => {
+          model.position.y = 0;
+          player.add(model);
+        })
+        .catch((err) => {
+          console.error("Player model failed to load, using default:", err);
+          addDefaultPlayerMeshes(player);
+        });
+    } else {
+      addDefaultPlayerMeshes(player);
+    }
     
     player.position.y = 0;
     player.castShadow = true;
     scene.add(player);
 
-    // Checkpoint markers (store reference map)
-    const checkpointMeshes = [];
+    // Checkpoint markers — use custom model if checkpointModelUrl provided, else procedural
     const checkpointMap = new Map();
-    
-    checkpoints.forEach((cp) => {
-      const checkpoint = createCheckpoint(cp.id);
-      checkpoint.position.set(cp.x, cp.y, cp.z);
-      checkpoint.userData = { id: cp.id };
-      checkpoint.visible = !cp.answered;
-      scene.add(checkpoint);
-      checkpointMeshes.push(checkpoint);
-      checkpointMap.set(cp.id, checkpoint);
-    });
+    if (checkpointModelUrl) {
+      loadModel(checkpointModelUrl, 2.5)
+        .then((model) => {
+          checkpoints.forEach((cp) => {
+            const clone = model.clone();
+            clone.position.set(cp.x, cp.y, cp.z);
+            clone.userData = { id: cp.id };
+            clone.visible = !cp.answered;
+            scene.add(clone);
+            checkpointMap.set(cp.id, clone);
+          });
+        })
+        .catch((err) => {
+          console.error('Checkpoint model failed to load, using default:', err);
+          checkpoints.forEach((cp) => {
+            const checkpoint = createCheckpoint(cp.id);
+            checkpoint.position.set(cp.x, cp.y, cp.z);
+            checkpoint.userData = { id: cp.id };
+            checkpoint.visible = !cp.answered;
+            scene.add(checkpoint);
+            checkpointMap.set(cp.id, checkpoint);
+          });
+        });
+    } else {
+      checkpoints.forEach((cp) => {
+        const checkpoint = createCheckpoint(cp.id);
+        checkpoint.position.set(cp.x, cp.y, cp.z);
+        checkpoint.userData = { id: cp.id };
+        checkpoint.visible = !cp.answered;
+        scene.add(checkpoint);
+        checkpointMap.set(cp.id, checkpoint);
+      });
+    }
 
     // Movement
     const keys = {};
     const velocity = new THREE.Vector3();
-    const speed = 0.15;
+    const speed = PLAYER_MOVE_SPEED;
 
     const handleKeyDown = (e) => {
       keys[e.key.toLowerCase()] = true;
@@ -293,7 +393,7 @@ export default function GameCanvas3D({ questions, onComplete, onScoreUpdate }) {
       currentMount?.removeChild(renderer.domElement);
       renderer.dispose();
     };
-  }, []);
+  }, [playerModelUrl, checkpointModelUrl, checkpoints]);
   
   // Handle space key interaction separately
   useEffect(() => {

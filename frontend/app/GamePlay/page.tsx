@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { api } from "@/lib/api/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Zap,
@@ -18,6 +18,7 @@ import GameCanvas3D from "@/components/game/GameCanvas3D";
 
 export default function GamePlay() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const courseId = searchParams.get("courseId");
   const courseTitle = searchParams.get("courseTitle");
@@ -68,6 +69,7 @@ export default function GamePlay() {
       total_questions: totalQ,
       time_taken_seconds: timeTaken,
     });
+    await queryClient.invalidateQueries({ queryKey: ["scores"] });
   };
 
   const handleRestart = () => {
@@ -129,6 +131,8 @@ export default function GamePlay() {
               questions={questions}
               onComplete={handleComplete}
               onScoreUpdate={setScore}
+              playerModelUrl={process.env.NEXT_PUBLIC_PLAYER_MODEL_URL ?? "/model.obj"}
+              checkpointModelUrl={process.env.NEXT_PUBLIC_CHECKPOINT_MODEL_URL}
             />
             {/* Header overlay on top of game */}
             <motion.div
@@ -139,9 +143,13 @@ export default function GamePlay() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => router.push("/Dashboard")}
-                title="Back to Dashboard"
-                aria-label="Back to Dashboard"
+                onClick={() =>
+                  courseId
+                    ? router.push(`/Dashboard/course/${courseId}`)
+                    : router.push("/Dashboard")
+                }
+                title="Back to course"
+                aria-label="Back to course"
                 className="pointer-events-auto shrink-0 w-10 h-10 rounded-xl text-white bg-slate-900/60 hover:bg-slate-800/80 border border-pink-500/30 backdrop-blur-xl shadow-lg shadow-pink-500/10"
               >
                 <ArrowLeft className="w-5 h-5" />
@@ -223,10 +231,10 @@ export default function GamePlay() {
                   <RotateCcw className="w-5 h-5 mr-2" /> Play Again
                 </Button>
                 <Button
-                  onClick={() => router.push("/Dashboard")}
+                  onClick={() => router.push(`/Dashboard/course/${courseId ?? ""}`)}
                   className="flex-1 bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 text-white hover:from-pink-600 hover:via-purple-700 hover:to-indigo-700 font-bold py-6"
                 >
-                  <Trophy className="w-5 h-5 mr-2" /> Dashboard
+                  <Trophy className="w-5 h-5 mr-2" /> Leaderboard
                 </Button>
               </div>
             </motion.div>
