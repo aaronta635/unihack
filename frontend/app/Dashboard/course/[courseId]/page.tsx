@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import AnimeBackground from "@/components/game/Background";
 import Leaderboard from "@/components/dashboard/Leaderboard";
 import WeekSelector from "@/components/dashboard/WeekSelector";
+import { useAdminMode } from "@/contexts/AdminModeContext";
 
 type Course = {
   id: string;
@@ -29,6 +30,7 @@ type Score = {
 export default function CoursePage() {
   const router = useRouter();
   const params = useParams();
+  const { isAdmin } = useAdminMode();
   const courseId = params.courseId as string;
 
   const {
@@ -82,7 +84,7 @@ export default function CoursePage() {
     return (
       <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
         <AnimeBackground />
-        <div className="relative z-10 text-slate-700 font-semibold">
+        <div className="relative z-10 text-[#4a2b3e] font-semibold">
           Loading...
         </div>
       </div>
@@ -93,12 +95,12 @@ export default function CoursePage() {
     return (
       <div className="min-h-screen relative overflow-hidden flex flex-col items-center justify-center gap-4">
         <AnimeBackground />
-        <div className="relative z-10 text-slate-700 font-semibold">
+        <div className="relative z-10 text-[#4a2b3e] font-semibold">
           Course not found
         </div>
         <Button
           onClick={() => router.push("/Dashboard")}
-          className="relative z-10"
+          className="relative z-10 bg-[#ffe6f0] border-[#ffb3c6] text-[#4a2b3e] hover:bg-[#ffd6e8]"
         >
           <ArrowLeft className="w-4 h-4 mr-2" /> Back to Dashboard
         </Button>
@@ -117,17 +119,17 @@ export default function CoursePage() {
             variant="ghost"
             size="sm"
             onClick={() => router.push("/Dashboard")}
-            className="text-slate-700 hover:text-slate-900 hover:bg-white/40 font-semibold border-2 border-slate-300"
+            className="text-[#4a2b3e] hover:text-[#2b1020] hover:bg-[#ffe6f0]/60 font-semibold border-2 border-[#ffb3c6] bg-white/60"
           >
             <ArrowLeft className="w-4 h-4 mr-1" /> Back to Dashboard
           </Button>
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#ffc5d0] to-[#ff8a8a] flex items-center justify-center">
               <Gamepad2 className="w-5 h-5 text-white" />
             </div>
             <div className="text-right">
-              <h1 className="text-lg font-black text-slate-800">{courseData.code}</h1>
-              <p className="text-xs text-slate-600 font-semibold truncate max-w-[180px]">
+              <h1 className="text-lg font-black text-[#4a2b3e]">{courseData.code}</h1>
+              <p className="text-xs text-[#8b5a7a] font-semibold truncate max-w-[180px]">
                 {courseData.title}
               </p>
             </div>
@@ -139,7 +141,7 @@ export default function CoursePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-white/95 backdrop-blur-xl border-2 border-slate-200 rounded-2xl p-6 shadow-xl"
+              className="bg-gradient-to-br from-[#ffe6f0]/90 to-[#fff7fb]/90 backdrop-blur-xl border-2 border-[#ffd6e8] rounded-2xl p-6 shadow-lg shadow-pink-200/40"
             >
               <Leaderboard scores={scoresForCourse} />
             </motion.section>
@@ -147,11 +149,12 @@ export default function CoursePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-white/95 backdrop-blur-xl border-2 border-slate-200 rounded-2xl p-6 shadow-xl"
+              className="bg-gradient-to-br from-[#ffe6f0]/90 to-[#fff7fb]/90 backdrop-blur-xl border-2 border-[#ffd6e8] rounded-2xl p-6 shadow-lg shadow-pink-200/40"
             >
               <WeekSelector
                 course={courseData}
                 onStartGame={handleStartGame}
+                canUploadPdf={isAdmin}
               />
             </motion.section>
           </div>

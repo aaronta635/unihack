@@ -103,3 +103,15 @@ body {
 .popup-after-interact__character {
   /* Bottom-right: anime character (narrow, rounded) */
 }
+
+/* Game-style rotating fonts for Hello User */
+.font-datatype {
+  font-family: "Datatype", monospace;
+  font-optical-sizing: auto;
+  font-style: normal;
+}
+.font-bitcount {
+  font-family: "Bitcount Prop Double Ink", monospace;
+  font-optical-sizing: auto;
+  font-style: normal;
+}

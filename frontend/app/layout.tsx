@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { AuthShell } from "@/components/AuthShell";
+import { AdminModeProvider } from "@/contexts/AdminModeContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,11 +25,21 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Bitcount+Prop+Double+Ink:wght@100..900&family=Datatype:wght@100..900&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          <AuthShell>{children}</AuthShell>
+          <AdminModeProvider>
+            <AuthShell>{children}</AuthShell>
+          </AdminModeProvider>
         </Providers>
       </body>
     </html>

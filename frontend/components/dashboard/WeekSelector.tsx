@@ -20,9 +20,12 @@ const WEEK_NUMBERS = Array.from({ length: 12 }, (_, i) => i + 1);
 export default function WeekSelector({
   course,
   onStartGame,
+  canUploadPdf = true,
 }: {
   course: Course | null;
   onStartGame: (course: Course, weekData: Week) => void;
+  /** When false (e.g. student mode), the Upload Tutorial button is hidden. */
+  canUploadPdf?: boolean;
 }) {
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -198,20 +201,22 @@ export default function WeekSelector({
                             <FileText className="w-3 h-3" /> View Tutorial
                           </a>
                         )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleUpload(num)}
-                          disabled={uploading}
-                          className="w-full border-2 border-[#ffd6e8] bg-[#ffe6f0]/60 text-[#4a2b3e] hover:bg-[#ffd6e8]/80 hover:text-[#2b1020] text-xs font-semibold"
-                        >
-                          <Upload className="w-3 h-3 mr-1" />
-                          {uploading
-                            ? "Uploading..."
-                            : hasTutorial
-                              ? "Replace Tutorial"
-                              : "Upload Tutorial"}
-                        </Button>
+                        {canUploadPdf && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleUpload(num)}
+                            disabled={uploading}
+                            className="w-full border-2 border-[#ffd6e8] bg-[#ffe6f0]/60 text-[#4a2b3e] hover:bg-[#ffd6e8]/80 hover:text-[#2b1020] text-xs font-semibold"
+                          >
+                            <Upload className="w-3 h-3 mr-1" />
+                            {uploading
+                              ? "Uploading..."
+                              : hasTutorial
+                                ? "Replace Tutorial"
+                                : "Upload Tutorial"}
+                          </Button>
+                        )}
                         {course && (
                           <Button
                             size="sm"
