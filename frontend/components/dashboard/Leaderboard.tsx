@@ -6,20 +6,20 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 const rankStyles = [
   {
-    bg: "from-yellow-500/30 to-amber-500/30",
-    border: "border-yellow-500/50",
+    bg: "from-amber-100 to-yellow-100",
+    border: "border-amber-300",
     icon: Crown,
     iconColor: "text-slate-800",
   },
   {
-    bg: "from-slate-300/20 to-slate-400/20",
-    border: "border-slate-400/40",
+    bg: "from-slate-100 to-slate-50",
+    border: "border-slate-300",
     icon: Medal,
     iconColor: "text-slate-800",
   },
   {
-    bg: "from-orange-600/20 to-amber-700/20",
-    border: "border-orange-500/40",
+    bg: "from-orange-100 to-amber-100",
+    border: "border-orange-300",
     icon: Medal,
     iconColor: "text-slate-800",
   },
@@ -48,12 +48,12 @@ export default function Leaderboard({ scores }: { scores: Score[] }) {
       <ScrollArea className="flex-1">
         <div className="space-y-2 pr-2">
           {sorted.length === 0 && (
-            <div className="text-center py-8">
-              <Star className="w-8 h-8 text-slate-700 mx-auto mb-2" />
+            <div className="text-center py-8 bg-amber-50/80 rounded-xl border border-amber-200">
+              <Star className="w-8 h-8 text-amber-600 mx-auto mb-2" />
               <p className="text-slate-800 text-sm font-semibold">
                 No scores yet
               </p>
-              <p className="text-slate-700 text-xs font-medium">
+              <p className="text-slate-600 text-xs font-medium">
                 Play a game to get on the board!
               </p>
             </div>
@@ -70,14 +70,14 @@ export default function Leaderboard({ scores }: { scores: Score[] }) {
                 className={`p-3 rounded-xl flex items-center gap-3 ${
                   style
                     ? `bg-gradient-to-r ${style.bg} border ${style.border}`
-                    : "bg-white/5 border border-white/5"
+                    : "bg-slate-100 border border-slate-200"
                 }`}
               >
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center ${
                     style
                       ? `${(style.bg as string).replace("from-", "bg-").split(" ")[0]}`
-                      : "bg-white/10"
+                      : "bg-slate-200"
                   }`}
                 >
                   {RankIcon ? (

@@ -56,7 +56,14 @@ const entities = {
     filter: (params?: { id?: string | null }): Promise<Course[]> => {
       if (!USE_MOCK_ENTITIES) return Promise.resolve([]);
       if (!params?.id) return Promise.resolve(MOCK_COURSES);
-      const found = MOCK_COURSES.filter((c) => c.id === params.id);
+      const id = String(params.id).trim();
+      const found = MOCK_COURSES.filter(
+        (c) =>
+          c.id === id ||
+          c.id === `course-${id}` ||
+          c.code === id ||
+          c.code === id.toUpperCase()
+      );
       return Promise.resolve(found);
     },
     update: (_id?: string, _data?: unknown) => Promise.resolve(),

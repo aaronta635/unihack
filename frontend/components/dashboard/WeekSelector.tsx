@@ -90,8 +90,8 @@ export default function WeekSelector({
                   }
                   className={`w-full text-left p-3 rounded-xl transition-all duration-200 ${
                     selectedWeek === num
-                      ? "bg-gradient-to-r from-cyan-100 to-blue-100 border-2 border-cyan-400"
-                      : "bg-slate-200/60 hover:bg-slate-300/60 border-2 border-slate-300"
+                      ? "bg-cyan-50 border-2 border-cyan-400"
+                      : "bg-white hover:bg-slate-50 border-2 border-slate-200 shadow-sm"
                   }`}
                 >
                   <div className="flex items-center justify-between">
