@@ -4,6 +4,11 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Sparkles, X, Bot, User as UserIcon, ArrowLeft } from "lucide-react";
 import type { McqQuestion } from "@/lib/types/entities";
+import { useTutorSettings } from "@/contexts/TutorSettingsContext";
+import { getPersonalityFallbackMessages } from "@/lib/tutorPersonalities";
+import { speakTutorReply } from "@/lib/tutorVoice";
+import TutorPersonalitySelector from "@/components/TutorPersonalitySelector";
+import TutorResponseModeToggle from "@/components/TutorResponseModeToggle";
 
 /** One message in the AI chat (user choice or AI tutor response). */
 type ChatMessage = {
@@ -183,6 +188,17 @@ function AiChatSection({ messages }: AiChatSectionProps) {
   );
 }
 
+/** Compact row: personality selector + response mode toggle (Tutor Personality Mode). */
+function TutorControlsRow() {
+  const { personalityKey, setPersonalityKey, responseMode, setResponseMode } = useTutorSettings();
+  return (
+    <div className="flex flex-wrap items-center gap-2 pb-2 border-b border-slate-600/50 shrink-0">
+      <TutorPersonalitySelector value={personalityKey} onChange={setPersonalityKey} />
+      <TutorResponseModeToggle mode={responseMode} onChange={setResponseMode} />
+    </div>
+  );
+}
+
 /** Placeholder for anime character (bottom-right, narrow column, to implement later). */
 function CharacterPlaceholder() {
   return (
@@ -211,6 +227,7 @@ export default function QuestionPopup({
   onClose,
 }: QuestionPopupProps) {
   const question = target.question;
+  const { personalityKey, responseMode } = useTutorSettings();
   const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(
     null
   );
@@ -223,7 +240,10 @@ export default function QuestionPopup({
       ...prev,
       { id: `msg-${Date.now()}-${prev.length}`, text, sender },
     ]);
-  }, []);
+    if (sender === "ai" && responseMode === "voice") {
+      speakTutorReply({ text, personalityKey });
+    }
+  }, [responseMode, personalityKey]);
 
   // Reset chat and welcome when question changes (e.g. next checkpoint)
   useEffect(() => {
@@ -231,15 +251,13 @@ export default function QuestionPopup({
     setChatMessages([]);
   }, [question]);
 
-  // AI welcome when popup opens (once per question)
+  // AI welcome when popup opens (once per question) — use personality-flavored message
   useEffect(() => {
     if (welcomeSentRef.current) return;
     welcomeSentRef.current = true;
-    addChatMessage(
-      "Here's a quick question! Pick the answer you think is right — I'll explain after.",
-      "ai"
-    );
-  }, [question, addChatMessage]);
+    const messages = getPersonalityFallbackMessages(personalityKey);
+    addChatMessage(messages.welcome, "ai");
+  }, [question, addChatMessage, personalityKey]);
 
   const handleOptionSelect = useCallback(
     (optionIndex: number) => {
@@ -255,24 +273,19 @@ export default function QuestionPopup({
       const correctLetter = String.fromCharCode(
         65 + question.correct_index
       );
-      const correctText = question.options[question.correct_index];
+      const correctText = question.options[question.correct_index] ?? "";
+      const messages = getPersonalityFallbackMessages(personalityKey);
 
       if (isCorrect) {
-        addChatMessage(
-          "That's correct! Nice work — you've got this concept. +10 points!",
-          "ai"
-        );
+        addChatMessage(messages.correct, "ai");
       } else {
-        addChatMessage(
-          `Not quite. The right answer is ${correctLetter}: ${correctText}. Review this and you'll get the next one!`,
-          "ai"
-        );
+        addChatMessage(messages.wrong(correctLetter, correctText), "ai");
       }
 
       const delayMs = 1400;
       setTimeout(() => onAnswer(isCorrect), delayMs);
     },
-    [question, isAnswerRevealed, addChatMessage, onAnswer]
+    [question, isAnswerRevealed, addChatMessage, onAnswer, personalityKey]
   );
 
   return (
@@ -339,6 +352,7 @@ export default function QuestionPopup({
           </div>
           <div className="popup-after-interact__chat-area flex-1 flex gap-4 min-h-0">
             <div className="flex-1 flex flex-col min-w-0 min-h-0">
+              <TutorControlsRow />
               <AiChatSection messages={chatMessages} />
             </div>
             <div className="popup-after-interact__character w-32 flex-shrink-0 flex flex-col min-h-0">
