@@ -297,8 +297,7 @@ export default function QuestionPopup({
         );
       }
 
-      const delayMs = 1400;
-      setTimeout(() => onAnswer(isCorrect), delayMs);
+      onAnswer(isCorrect);
     },
     [question, isAnswerRevealed, addChatMessage, onAnswer]
   );
