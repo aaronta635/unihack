@@ -2,84 +2,19 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api/client";
-import {
-  LogOut,
-  Gamepad2,
-  Sparkles,
-  GraduationCap,
-  BookOpen,
-  Calendar,
-} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { LogOut, Gamepad2, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import AnimeBackground from "@/components/game/Background";
-import SchoolSelector from "@/components/dashboard/SchoolSelector";
-import CourseSelector from "@/components/dashboard/CourseSelector";
-import WeekSelector from "@/components/dashboard/WeekSelector";
-import Leaderboard from "@/components/dashboard/Leaderboard";
+import CourseSidebar from "@/components/dashboard/CourseSidebar";
 
 export default function Dashboard() {
   const router = useRouter();
-  const [selectedSchool, setSelectedSchool] = useState<{
-    id: string;
-    name: string;
-    code?: string;
-  } | null>(null);
-  const [selectedCourse, setSelectedCourse] = useState<{
-    id: string;
-    code: string;
-    title: string;
-  } | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user] = useState({
     full_name: "Demo User",
     email: "demo@studyquest.com",
   });
-  const [selectionDialogOpen, setSelectionDialogOpen] = useState(false);
-
-  const { data: schools = [] } = useQuery({
-    queryKey: ["schools"],
-    queryFn: () => api.entities.School.list(),
-  });
-
-  const { data: allCourses = [] } = useQuery({
-    queryKey: ["courses"],
-    queryFn: () => api.entities.Course.list(),
-  });
-
-  const courses = selectedSchool
-    ? allCourses.filter(
-        (c: { school_id?: string }) =>
-          !c.school_id || c.school_id === selectedSchool.id
-      )
-    : [];
-
-  const { data: scores = [] } = useQuery({
-    queryKey: ["scores"],
-    queryFn: () => api.entities.Score.list("-score", 50),
-  });
-
-  const handleStartGame = (
-    course: { id: string; title?: string; code?: string },
-    weekData: { week_number: number }
-  ) => {
-    const params = new URLSearchParams({
-      courseId: course.id,
-      courseTitle: course.title ?? "",
-      courseCode: course.code ?? "",
-      weekNumber: String(weekData.week_number),
-    });
-    router.push(`/GamePlay?${params.toString()}`);
-    setSelectionDialogOpen(false);
-  };
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -204,7 +139,11 @@ export default function Dashboard() {
             <Leaderboard scores={scores} />
           </motion.div>
         </div>
+        <div className="p-4 md:px-8 md:pb-8" />
       </div>
+      <AnimatePresence>
+        <CourseSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      </AnimatePresence>
     </div>
   );
 }
