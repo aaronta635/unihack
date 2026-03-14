@@ -8,6 +8,8 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const uploadRouter = require('./routes/upload');
 
+require('dotenv').config(); // add this near the top
+
 
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
@@ -29,6 +31,9 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.get('/api/health', function (req, res) {
+  res.json({ ok: true, message: 'API is up', timestamp: new Date().toISOString() });
+});
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/auth', authRouter);
