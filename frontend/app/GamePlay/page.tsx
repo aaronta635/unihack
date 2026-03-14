@@ -131,6 +131,8 @@ export default function GamePlay() {
               questions={questions}
               onComplete={handleComplete}
               onScoreUpdate={setScore}
+              playerModelUrl={process.env.NEXT_PUBLIC_PLAYER_MODEL_URL ?? "/model.obj"}
+              checkpointModelUrl={process.env.NEXT_PUBLIC_CHECKPOINT_MODEL_URL}
             />
             {/* Header and overlays — in motion for animation only; canvas already full-screen above */}
             <motion.div
