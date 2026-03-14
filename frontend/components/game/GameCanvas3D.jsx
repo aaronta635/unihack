@@ -46,17 +46,27 @@ export default function GameCanvas3D({ questions, onComplete, onScoreUpdate }) {
     scene.background = new THREE.Color(0xF0D0E8);
     scene.fog = new THREE.Fog(0xF0D0E8, 30, 80);
 
-    // Camera
-    const camera = new THREE.PerspectiveCamera(60, 600 / 420, 0.1, 1000);
+    // Camera — aspect updated on resize
+    const camera = new THREE.PerspectiveCamera(60, 16 / 9, 0.1, 1000);
     camera.position.set(0, 15, 25);
     camera.lookAt(0, 0, 0);
 
-    // Renderer
+    // Renderer — size set from container
     const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(600, 420);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    const setSize = () => {
+      const w = currentMount.clientWidth || 800;
+      const h = currentMount.clientHeight || 450;
+      renderer.setSize(w, h);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    };
+    setSize();
     currentMount.appendChild(renderer.domElement);
+    const resizeObserver = new ResizeObserver(setSize);
+    resizeObserver.observe(currentMount);
 
     // Lights
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -277,6 +287,7 @@ export default function GameCanvas3D({ questions, onComplete, onScoreUpdate }) {
     // Cleanup
     return () => {
       cancelAnimationFrame(animationId);
+      resizeObserver.disconnect();
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
       currentMount?.removeChild(renderer.domElement);
@@ -322,8 +333,8 @@ export default function GameCanvas3D({ questions, onComplete, onScoreUpdate }) {
   };
 
   return (
-    <div className="relative">
-      <div ref={mountRef} className="rounded-2xl overflow-hidden border-4 border-emerald-800/40 shadow-2xl" />
+    <div className="relative w-full h-full min-h-0">
+      <div ref={mountRef} className="w-full h-full min-h-[50vh] rounded-xl overflow-hidden border-2 border-emerald-800/40 shadow-2xl" />
       
       {/* Controls UI */}
       <div className="absolute bottom-4 left-4 bg-black/70 text-white px-4 py-2 rounded-lg text-sm">
@@ -348,7 +359,11 @@ export default function GameCanvas3D({ questions, onComplete, onScoreUpdate }) {
 
       <AnimatePresence>
         {activeQuestion && (
-          <QuestionPopup target={activeQuestion} onAnswer={handleAnswer} />
+          <QuestionPopup
+            target={activeQuestion}
+            onAnswer={handleAnswer}
+            onClose={() => setActiveQuestion(null)}
+          />
         )}
       </AnimatePresence>
     </div>

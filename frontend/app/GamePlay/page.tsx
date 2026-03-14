@@ -95,13 +95,14 @@ export default function GamePlay() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden flex flex-col">
       <AnimeBackground />
-      <div className="relative z-10">
+      <div className="relative z-10 flex flex-col flex-1 min-h-0">
+        {/* Compact header — leaves most space for game */}
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="flex items-center justify-between p-4"
+          className="flex items-center justify-between px-3 py-2 shrink-0"
         >
           <Button
             variant="ghost"
@@ -116,30 +117,27 @@ export default function GamePlay() {
             animate={{ scale: [1, 1.05, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
           >
-            <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 backdrop-blur-xl rounded-full px-5 py-2.5 border-2 border-yellow-400/40 shadow-xl shadow-yellow-500/20">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-              >
-                <Zap className="w-5 h-5 text-yellow-400" fill="currentColor" />
-              </motion.div>
-              <span className="text-white font-black text-lg">{score}</span>
+            <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 backdrop-blur-xl rounded-full px-4 py-2 border-2 border-yellow-400/40 shadow-xl shadow-yellow-500/20">
+              <Zap className="w-4 h-4 text-yellow-400" fill="currentColor" />
+              <span className="text-white font-black text-base">{score}</span>
               <span className="text-yellow-200 text-xs font-bold">POINTS</span>
             </div>
           </motion.div>
-          <div className="text-right bg-slate-900/60 backdrop-blur-xl px-4 py-2 rounded-xl border border-purple-500/30 shadow-lg shadow-purple-500/10">
-            <p className="text-white font-bold text-sm">{courseCode}</p>
-            <p className="text-purple-300 text-xs font-semibold">
+          <div className="text-right bg-slate-900/60 backdrop-blur-xl px-3 py-1.5 rounded-lg border border-purple-500/30 shadow-lg shadow-purple-500/10">
+            <p className="text-white font-bold text-xs">{courseCode}</p>
+            <p className="text-purple-300 text-[10px] font-semibold">
               Week {weekNumber}
             </p>
           </div>
         </motion.div>
-        <div className="flex items-center justify-center p-4 pb-24 md:pb-8">
+
+        {/* Game area — almost full screen */}
+        <div className="flex-1 min-h-0 flex flex-col p-2 md:p-3">
           {questions.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 max-w-md text-center"
+              className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 max-w-md text-center mx-auto my-auto"
             >
               <Sparkles className="w-12 h-12 text-yellow-400/50 mx-auto mb-4" />
               <h2 className="text-xl font-bold text-white mb-2">
@@ -157,29 +155,16 @@ export default function GamePlay() {
             </motion.div>
           ) : gameState === "playing" ? (
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex-1 min-h-0 relative"
             >
-              <motion.div
-                className="mb-4 text-center bg-slate-900/70 backdrop-blur-xl px-6 py-3 rounded-2xl border border-cyan-500/30 shadow-xl shadow-cyan-500/10 mx-auto max-w-xl"
-                animate={{
-                  borderColor: [
-                    "rgba(6, 182, 212, 0.3)",
-                    "rgba(236, 72, 153, 0.3)",
-                    "rgba(6, 182, 212, 0.3)",
-                  ],
-                }}
-                transition={{ duration: 3, repeat: Infinity }}
-              >
-                <p className="text-white font-bold text-sm mb-1 flex items-center justify-center gap-2">
-                  <Sparkles className="w-4 h-4 text-yellow-400" />
-                  Quest Instructions
-                  <Sparkles className="w-4 h-4 text-yellow-400" />
-                </p>
+              {/* Quest instructions — small overlay so game can be full size */}
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 px-4 py-2 rounded-xl bg-slate-900/80 backdrop-blur-xl border border-cyan-500/30 shadow-lg text-center">
                 <p className="text-cyan-200 text-xs font-semibold">
-                  Use WASD to explore • Walk to checkpoints and press SPACE!
+                  WASD to move • SPACE at checkpoints
                 </p>
-              </motion.div>
+              </div>
               <GameCanvas3D
                 questions={questions}
                 onComplete={handleComplete}
