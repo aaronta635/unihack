@@ -62,13 +62,13 @@ function McqSection({
           </p>
         </div>
       </div>
-      <div className="space-y-2 flex-1 min-h-0">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-1 min-h-0 content-start">
         {optionLabels.map((optionText, optionIndex) => (
           <motion.button
             key={optionIndex}
             onClick={() => onOptionSelect(optionIndex)}
             disabled={isAnswerRevealed}
-            whileHover={{ scale: isAnswerRevealed ? 1 : 1.02, x: 4 }}
+            whileHover={{ scale: isAnswerRevealed ? 1 : 1.02 }}
             whileTap={{ scale: 0.98 }}
             className={`w-full text-left py-3 px-4 rounded-xl border-2 text-sm font-bold transition-all duration-300 ${getOptionButtonStyle(
               optionIndex
