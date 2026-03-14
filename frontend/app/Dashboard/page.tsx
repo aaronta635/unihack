@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api/client";
-import { LogOut, Gamepad2, Menu, Shield, ShieldOff } from "lucide-react";
+import { LogOut, Gamepad2, Menu, Shield, ShieldOff, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AnimeBackground from "@/components/game/Background";
 import CourseSidebar from "@/components/dashboard/CourseSidebar";
 import Leaderboard from "@/components/dashboard/Leaderboard";
 import { useAdminMode } from "@/contexts/AdminModeContext";
+import StudyGoLogo from "@/components/StudyGoLogo";
 
 const HELLO_FONTS = [
   { name: "Datatype", class: "font-datatype" },
@@ -23,6 +24,7 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [fontIndex, setFontIndex] = useState(0);
   const [useItalic, setUseItalic] = useState(false);
+  const [useBold, setUseBold] = useState(true);
 
   const [user] = useState({
     full_name: "Demo User",
@@ -31,12 +33,13 @@ export default function Dashboard() {
 
   const displayName = user?.full_name || user?.email || "User";
 
-  // Rotate font every 2 seconds with random italic
+  // Rotate font every 0.8s with mixed italic, normal, and bold
   useEffect(() => {
     const t = setInterval(() => {
       setFontIndex((i) => (i + 1) % HELLO_FONTS.length);
       setUseItalic((prev) => Math.random() > 0.5);
-    }, 2000);
+      setUseBold((prev) => Math.random() > 0.5);
+    }, 800);
     return () => clearInterval(t);
   }, []);
 
@@ -51,15 +54,31 @@ export default function Dashboard() {
       <div className="relative z-10">
         <div className="flex items-center justify-between p-4 md:px-8">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#ffc5d0] to-[#ff8a8a] flex items-center justify-center">
-              <Gamepad2 className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-lg font-black text-[#4a2b3e]">StudyQuest</h1>
-              <p className="text-xs text-[#8b5a7a] font-semibold">
-                {user ? `Welcome, ${displayName}` : "Dashboard"}
-              </p>
-            </div>
+            {isAdmin ? (
+              <>
+                <div className="flex items-center gap-3 rounded-xl flex-shrink-0 shadow-md border-2 border-[#2a7a76]/80 bg-[#1E615D] pl-2 pr-4 py-2 min-w-[140px]" title="studygo — Admin">
+                  <StudyGoLogo className="w-12 h-12 flex-shrink-0" />
+                  <span className="text-white font-bold text-lg tracking-tight lowercase whitespace-nowrap">studygo</span>
+                </div>
+                <div>
+                  <p className="text-xs text-[#2a7a76] font-semibold">
+                    Admin · {displayName}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#ffc5d0] to-[#ff8a8a] flex items-center justify-center shadow-md ring-2 ring-[#ffd6e8]/80" title="StudyQuest">
+                  <GraduationCap className="w-5 h-5 text-white" strokeWidth={2.2} />
+                </div>
+                <div>
+                  <h1 className="text-lg font-black text-[#4a2b3e]">StudyQuest</h1>
+                  <p className="text-xs text-[#8b5a7a] font-semibold">
+                    {user ? `Welcome, ${displayName}` : "Dashboard"}
+                  </p>
+                </div>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -107,7 +126,7 @@ export default function Dashboard() {
             className="rounded-2xl border-2 border-[#ffd6e8] bg-gradient-to-r from-[#ffe6f0]/90 via-[#fff7fb]/90 to-[#ffe6de]/90 backdrop-blur-xl p-8 shadow-lg shadow-pink-200/40"
           >
             <p
-              className={`text-4xl md:text-5xl font-black text-[#4a2b3e] text-center transition-all duration-300 ${HELLO_FONTS[fontIndex].class}`}
+              className={`text-4xl md:text-5xl text-[#4a2b3e] text-center transition-all duration-300 ${HELLO_FONTS[fontIndex].class} ${useBold ? "font-black" : "font-semibold"}`}
               style={{ fontStyle: useItalic ? "italic" : "normal" }}
             >
               Hello, {displayName}
