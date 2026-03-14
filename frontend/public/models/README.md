@@ -14,6 +14,8 @@ Place your **OBJ** or **GLB/GLTF** file here.
 
 **Spawn:** `fox/model.obj` + `fox/materials.mtl` — “Japanese White Fox” by Aimi Sekiguchi [CC-BY] via Poly Pizza (placed at character spawn).
 
+**Battle Demo (GameFight):** `charmander/model.obj` + `charmander/materials.mtl` — “Low Poly Charmander” by Tipatat Chennavasin [CC-BY] via Poly Pizza (second character, static at spawn). `megakit/Grass_Common_Short.fbx` — Stylized Nature MegaKit by Quaternius (optional grass prop). `arena/Mineways2Skfb.obj` + `Mineways2Skfb.mtl` + texture — practice Pokémon arena in the Battle Demo.
+
 **Checkpoints (optional):**  
 Set `NEXT_PUBLIC_CHECKPOINT_MODEL_URL=/models/checkpoint.glb` in `.env.local`.
 

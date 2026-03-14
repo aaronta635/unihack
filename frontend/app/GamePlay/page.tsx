@@ -28,6 +28,7 @@ export default function GamePlay() {
   const [score, setScore] = useState(0);
   const [gameState, setGameState] = useState<"playing" | "complete">("playing");
   const [finalScore, setFinalScore] = useState({ score: 0, total: 0 });
+  const [showControlsHint, setShowControlsHint] = useState(true);
   const [user] = useState({
     full_name: "Demo User",
     email: "demo@studyquest.com",
@@ -89,6 +90,11 @@ export default function GamePlay() {
   useEffect(() => {
     if (courseId && questions.length > 0) window.scrollTo(0, 0);
   }, [courseId, questions.length]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setShowControlsHint(false), 3000);
+    return () => clearTimeout(t);
+  }, []);
 
   const handleComplete = async (finalPts: number, totalQ: number) => {
     setFinalScore({ score: finalPts, total: totalQ });
@@ -203,11 +209,13 @@ export default function GamePlay() {
                   </p>
                 </div>
               </div>
-              <div className="absolute top-12 left-1/2 -translate-x-1/2 z-10 px-4 py-2 rounded-xl bg-slate-900/80 backdrop-blur-xl border border-cyan-500/30 shadow-lg text-center pointer-events-none">
-                <p className="text-cyan-200 text-xs font-semibold">
-                  WASD to move • SPACE at checkpoints
-                </p>
-              </div>
+              {showControlsHint && (
+                <div className="absolute top-12 left-1/2 -translate-x-1/2 z-10 px-4 py-2 rounded-xl bg-slate-900/80 backdrop-blur-xl border border-cyan-500/30 shadow-lg text-center pointer-events-none">
+                  <p className="text-cyan-200 text-xs font-semibold">
+                    WASD to move • SPACE at checkpoints
+                  </p>
+                </div>
+              )}
             </motion.div>
           </>
         ) : (

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { LogOut, Gamepad2, Menu } from "lucide-react";
+import { LogOut, Gamepad2, Menu, Swords } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AnimeBackground from "@/components/game/Background";
 import CourseSidebar from "@/components/dashboard/CourseSidebar";
@@ -33,6 +33,13 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              onClick={() => router.push("/GameFight")}
+              className="bg-amber-100 hover:bg-amber-200 border-2 border-amber-400 text-amber-900 font-semibold"
+            >
+              <Swords className="w-4 h-4 mr-2" />
+              Battle Demo
+            </Button>
             <Button
               onClick={() => setSidebarOpen(true)}
               className="bg-slate-100 hover:bg-slate-200 border-2 border-slate-300 text-slate-800 font-semibold"
