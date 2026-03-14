@@ -7,7 +7,6 @@ const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const uploadRouter = require('./routes/upload');
-const tutorRouter = require('./routes/tutor');
 
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
@@ -33,13 +32,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/api/health', function (req, res) {
   res.json({ ok: true, message: 'API is up', timestamp: new Date().toISOString() });
 });
-// Mount API routes before catch-all index so /tutor/speech etc. are matched
-app.use('/tutor', tutorRouter);
+app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/auth', authRouter);
 app.use('/upload', uploadRouter);
 app.use('/api', scoresRouter);
-app.use('/', indexRouter);
 
 const swaggerSpec = swaggerJSDoc({
   definition: {
