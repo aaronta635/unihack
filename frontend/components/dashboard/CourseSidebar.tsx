@@ -56,18 +56,18 @@ export default function CourseSidebar({
         animate={{ opacity: open ? 1 : 0 }}
         transition={{ duration: 0.2 }}
         onClick={onClose}
-        className="fixed inset-0 z-40 bg-[#ffe6f0]/50 backdrop-blur-sm"
+        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
         style={{ pointerEvents: open ? "auto" : "none" }}
       />
       <motion.aside
         initial={false}
         animate={{ x: open ? 0 : "-100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 200 }}
-        className="fixed left-0 top-0 z-50 h-full w-full max-w-md bg-gradient-to-b from-[#fff7fb] to-[#ffe6f0]/95 shadow-2xl border-r border-[#ffd6e8] flex flex-col"
+        className="fixed left-0 top-0 z-50 h-full w-full max-w-md bg-white/95 dark:bg-slate-900/95 shadow-2xl border-r border-slate-200 dark:border-slate-700 flex flex-col"
       >
         <div className="relative flex-1 flex flex-col min-h-0">
-          <div className="p-4 border-b border-[#ffd6e8] flex items-center justify-between bg-[#ffe6f0]/50">
-            <h2 className="text-lg font-bold text-[#4a2b3e]">
+          <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">
               {!selectedSchool
                 ? "Select university"
                 : "Select course"}
@@ -76,7 +76,7 @@ export default function CourseSidebar({
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="rounded-full text-[#4a2b3e] hover:bg-[#ffd6e8]/80 hover:text-[#2b1020]"
+              className="rounded-full"
             >
               <X className="w-5 h-5" />
             </Button>
@@ -92,10 +92,10 @@ export default function CourseSidebar({
                   className="space-y-4"
                 >
                   <div className="flex items-center gap-2 mb-4">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#ffc5d0] to-[#ff8a8a] flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
                       <GraduationCap className="w-4 h-4 text-white" />
                     </div>
-                    <span className="text-sm font-semibold text-[#8b5a7a]">
+                    <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
                       Choose your university
                     </span>
                   </div>
@@ -120,15 +120,15 @@ export default function CourseSidebar({
                       setSelectedSchool(null);
                       setSelectedCourse(null);
                     }}
-                    className="mb-2 text-[#8b5a7a] hover:text-[#4a2b3e] hover:bg-[#ffd6e8]/60"
+                    className="mb-2 text-slate-600 dark:text-slate-400"
                   >
                     ← Back to universities
                   </Button>
                   <div className="flex items-center gap-2 mb-4">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#ffc5d0] to-[#ff8a8a] flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center">
                       <BookOpen className="w-4 h-4 text-white" />
                     </div>
-                    <span className="text-sm font-semibold text-[#4a2b3e]">
+                    <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
                       {selectedSchool.name}
                     </span>
                   </div>
