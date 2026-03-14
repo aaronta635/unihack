@@ -1202,18 +1202,18 @@ export default function GameCanvas3D({
       <div ref={mountRef} className="absolute inset-0 top-0 left-0 w-full h-full overflow-hidden" style={{ top: 0, left: 0, right: 0, bottom: 0 }} />
       
       {/* Controls UI — raised so not cut off at bottom */}
-      <div className="absolute bottom-6 left-4 max-w-[200px] bg-black/70 text-white px-3 py-2.5 rounded-lg text-xs">
+      <div className="absolute bottom-6 left-4 max-w-[220px] bg-[#ffe6f0]/85 text-[#4a2b3e] px-3 py-2.5 rounded-lg text-xs shadow-md shadow-pink-200/60">
         <div className="font-semibold mb-1">Controls</div>
         <div>WASD or arrows — Move</div>
         {nearCheckpoint !== null && (
-          <div className="text-yellow-300 font-bold mt-1.5 animate-pulse">
+          <div className="text-[#c2185b] font-bold mt-1.5 animate-pulse">
             SPACE — interact
           </div>
         )}
       </div>
 
       {/* Progress only (score shown in header) — top-right below header area */}
-      <div className="absolute top-14 right-4 bg-black/70 text-white px-3 py-1.5 rounded-lg text-sm font-bold">
+      <div className="absolute top-14 right-4 bg-[#ffe6f0]/85 text-[#4a2b3e] px-3 py-1.5 rounded-lg text-sm font-bold shadow-md shadow-pink-200/60">
         {answered}/{questions.length} questions
       </div>
 
