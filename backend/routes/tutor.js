@@ -2,17 +2,24 @@ const express = require("express");
 const router = express.Router();
 const OpenAI = require("openai");
 const { buildTutorSystemPrompt } = require("../lib/buildTutorSystemPrompt");
+const { getPersonalityByKey } = require("../lib/tutorPersonalities");
 
 /** Map personality key to OpenAI TTS voice (alloy, echo, fable, onyx, nova, shimmer). */
 const PERSONALITY_TO_VOICE = {
-  "soft-supportive": "nova",
-  "strict-academic": "onyx",
-  "friendly-buddy": "alloy",
+  "best-friend": "nova",
 };
 
+/** OpenAI client for TTS (voice). Uses OPENAI_API_KEY only. */
 function getOpenAI() {
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error("OPENAI_API_KEY is not set");
+  if (!apiKey) throw new Error("OPENAI_API_KEY is not set (used for TTS/voice)");
+  return new OpenAI({ apiKey });
+}
+
+/** OpenAI client for chat (fine-tuned model). Uses FT_OPENAI_API_KEY only (separate key from voice). */
+function getOpenAIForChat() {
+  const apiKey = process.env.FT_OPENAI_API_KEY;
+  if (!apiKey) throw new Error("FT_OPENAI_API_KEY is required for chat (fine-tuned model)");
   return new OpenAI({ apiKey });
 }
 
@@ -32,16 +39,27 @@ router.post("/chat", express.json(), async (req, res) => {
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: "messages array is required and must not be empty" });
     }
-    const key = typeof personalityKey === "string" ? personalityKey.trim() : "soft-supportive";
+    const key = typeof personalityKey === "string" ? personalityKey.trim() : "best-friend";
+    const personality = getPersonalityByKey(key);
 
     const systemPrompt = buildTutorSystemPrompt({
       personalityKey: key,
       lessonContext: typeof lessonContext === "string" ? lessonContext : undefined,
     });
 
-    const openai = getOpenAI();
+    const modelToUse = personality?.fineTunedModel;
+    if (!modelToUse) {
+      return res.status(500).json({
+        error: "FT_MODEL_BEST_FRIEND is required. Set it in backend .env.",
+      });
+    }
+
+    console.log("Tutor personality:", key);
+    console.log("Model used:", modelToUse);
+
+    const openai = getOpenAIForChat();
     const completion = await openai.chat.completions.create({
-      model: process.env.TUTOR_OPENAI_MODEL || "gpt-4o-mini",
+      model: modelToUse,
       messages: [
         { role: "system", content: systemPrompt },
         ...messages.map((m) => ({
