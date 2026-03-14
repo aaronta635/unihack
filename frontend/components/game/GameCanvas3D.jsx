@@ -333,28 +333,23 @@ export default function GameCanvas3D({ questions, onComplete, onScoreUpdate }) {
   };
 
   return (
-    <div className="relative w-full h-full min-h-0">
-      <div ref={mountRef} className="w-full h-full min-h-[50vh] rounded-xl overflow-hidden border-2 border-emerald-800/40 shadow-2xl" />
+    <div className="absolute inset-0 w-full h-full">
+      <div ref={mountRef} className="w-full h-full overflow-hidden" />
       
-      {/* Controls UI */}
-      <div className="absolute bottom-4 left-4 bg-black/70 text-white px-4 py-2 rounded-lg text-sm">
-        <div className="font-semibold mb-1">Controls:</div>
-        <div>WASD / Arrow Keys - Move</div>
+      {/* Controls UI — raised so not cut off at bottom */}
+      <div className="absolute bottom-6 left-4 max-w-[200px] bg-black/70 text-white px-3 py-2.5 rounded-lg text-xs">
+        <div className="font-semibold mb-1">Controls</div>
+        <div>WASD or arrows — Move</div>
         {nearCheckpoint !== null && (
-          <div className="text-yellow-300 font-bold mt-2 animate-pulse">
-            Press SPACE to interact
+          <div className="text-yellow-300 font-bold mt-1.5 animate-pulse">
+            SPACE — interact
           </div>
         )}
       </div>
 
-      {/* Score */}
-      <div className="absolute top-4 right-4 bg-black/70 text-white px-4 py-2 rounded-lg text-lg font-bold">
-        Score: {score}
-      </div>
-
-      {/* Progress */}
-      <div className="absolute top-4 left-4 bg-black/70 text-white px-4 py-2 rounded-lg text-sm">
-        Questions: {answered}/{questions.length}
+      {/* Progress only (score shown in header) — top-right below header area */}
+      <div className="absolute top-14 right-4 bg-black/70 text-white px-3 py-1.5 rounded-lg text-sm font-bold">
+        {answered}/{questions.length} questions
       </div>
 
       <AnimatePresence>

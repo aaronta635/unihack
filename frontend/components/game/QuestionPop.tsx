@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { Sparkles, X, Bot, User as UserIcon, ArrowLeft } from "lucide-react";
 import type { McqQuestion } from "@/lib/types/entities";
@@ -276,23 +275,27 @@ export default function QuestionPopup({
     [question, isAnswerRevealed, addChatMessage, onAnswer]
   );
 
-  const popupContent = (
+  return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm"
-      style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }}
+      className="absolute inset-0 z-50 flex items-center justify-center p-4"
     >
+      {/* Semi-transparent overlay — game stays visible in background */}
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
+        aria-hidden
+      />
+      {/* Large popup card — inside game, game visible around edges */}
       <motion.div
-        initial={{ scale: 0.98 }}
+        initial={{ scale: 0.95 }}
         animate={{ scale: 1 }}
-        exit={{ scale: 0.98 }}
+        exit={{ scale: 0.95 }}
         transition={{ type: "spring", bounce: 0.3 }}
-        className="popup-after-interact absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 border-4 border-yellow-400/60 rounded-none shadow-2xl shadow-yellow-500/30 overflow-hidden flex flex-col"
-        style={{ position: "absolute", inset: 0 }}
+        className="popup-after-interact relative z-10 w-full max-w-5xl h-full max-h-[85vh] bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 border-4 border-yellow-400/60 rounded-3xl shadow-2xl shadow-yellow-500/30 overflow-hidden flex flex-col"
       >
-        {/* Back button — icon only to avoid overlap with question */}
+        {/* Back button — icon only */}
         {onClose && (
           <button
             type="button"
@@ -324,9 +327,8 @@ export default function QuestionPopup({
           ))}
         </div>
 
-        {/* Layout: top = Question+MCQ (40%), bottom = AI chat | anime character (60%) — pl clears back button */}
+        {/* Layout: top = Question+MCQ (40%), bottom = AI chat | anime character (60%) */}
         <div className="popup-after-interact__body relative z-10 flex flex-col flex-1 min-h-0 pt-6 pr-6 pb-6 pl-14 gap-5">
-          {/* Top 40%: Question + MCQ (full width) */}
           <div className="popup-after-interact__mcq flex flex-col min-h-0 flex-[0_0_40%] border border-white/10 rounded-2xl bg-slate-900/40 p-5 overflow-auto">
             <McqSection
               question={question}
@@ -335,8 +337,6 @@ export default function QuestionPopup({
               onOptionSelect={handleOptionSelect}
             />
           </div>
-
-          {/* Bottom ~60%: AI chat (left) | anime character (right, narrow) */}
           <div className="popup-after-interact__chat-area flex-1 flex gap-4 min-h-0">
             <div className="flex-1 flex flex-col min-w-0 min-h-0">
               <AiChatSection messages={chatMessages} />
@@ -349,9 +349,4 @@ export default function QuestionPopup({
       </motion.div>
     </motion.div>
   );
-
-  if (typeof document !== "undefined") {
-    return createPortal(popupContent, document.body);
-  }
-  return popupContent;
 }
