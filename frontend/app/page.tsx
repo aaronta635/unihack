@@ -1,65 +1,259 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Sparkles,
+  GraduationCap,
+  Zap,
+  Star,
+  User,
+  Mail,
+  Lock,
+  ArrowRight,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import AnimeBackground from "@/components/game/Background";
+import StudyGoLogo from "@/components/StudyGoLogo";
+import { api } from "@/lib/api/client";
 
 export default function Home() {
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams.get("return_url") ?? "/Dashboard";
+
+  const [showAuth, setShowAuth] = useState(false);
+  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
+
+  const handleEnter = () => {
+    setAuthError(null);
+    setShowAuth(true);
+  };
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    setAuthLoading(true);
+    try {
+      if (mode === "login") {
+        const { user, error } = await api.auth.login(formData.email, formData.password);
+        if (error) {
+          setAuthError(error);
+          setAuthLoading(false);
+          return;
+        }
+        if (user) window.location.href = returnUrl;
+        return;
+      }
+      const { user: signupUser, error: signupError } = await api.auth.signup(
+        formData.email,
+        formData.password,
+        formData.name || undefined
+      );
+      if (signupError) {
+        setAuthError(signupError);
+        setAuthLoading(false);
+        return;
+      }
+      if (signupUser) {
+        const { error: loginError } = await api.auth.login(formData.email, formData.password);
+        if (!loginError) {
+          window.location.href = returnUrl;
+          return;
+        }
+      }
+      setAuthError(null);
+      setAuthLoading(false);
+      setMode("login");
+    } catch {
+      setAuthError("Something went wrong. Try again.");
+      setAuthLoading(false);
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
+      <AnimeBackground />
+      <AnimatePresence mode="wait">
+        {!showAuth ? (
+          <motion.div
+            key="welcome"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="relative z-10 max-w-lg w-full mx-4"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+            <motion.div
+              initial={{ y: -40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="text-center mb-8"
+            >
+              <motion.div
+                animate={{ rotate: [0, 5, -5, 0] }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+                className="inline-block mb-6"
+              >
+                <div className="flex items-center gap-3 rounded-3xl shadow-2xl border-2 border-[#2a7a76]/80 bg-[#1E615D] pl-4 pr-6 py-4 mx-auto">
+                  <StudyGoLogo className="w-16 h-16 flex-shrink-0" />
+                  <span className="text-white font-bold text-2xl tracking-tight lowercase">studygo</span>
+                </div>
+              </motion.div>
+              <h1 className="text-5xl md:text-6xl font-black text-black mb-3 drop-shadow-lg">
+                studygo
+              </h1>
+              <p className="text-black text-lg font-semibold">
+                Learn. Play.{" "}
+                <span className="font-black">Conquer.</span>
+              </p>
+            </motion.div>
+            <motion.div
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.6 }}
+              className="grid grid-cols-3 gap-3 mb-8"
+            >
+              {[
+                { icon: GraduationCap, label: "Course Based", gradient: "from-[#ffc5d0] to-[#ff8a8a]" },
+                { icon: Zap, label: "Interactive", gradient: "from-[#ff9b4d] to-[#ff8a8a]" },
+                { icon: Star, label: "Leaderboard", gradient: "from-[#ffb3c6] to-[#ff8fb1]" },
+              ].map((feat, i) => (
+                <motion.div
+                  key={feat.label}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.5 + i * 0.1, type: "spring" }}
+                  className="bg-[#ffe6f0]/70 backdrop-blur border-2 border-[#ffd6e8] rounded-2xl p-4 text-center shadow-md"
+                >
+                  <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${feat.gradient} flex items-center justify-center mx-auto mb-2 shadow-lg ring-2 ring-white/50`}>
+                    <feat.icon className="w-6 h-6 text-white" strokeWidth={2} />
+                  </div>
+                  <p className="text-xs font-bold text-black">{feat.label}</p>
+                </motion.div>
+              ))}
+            </motion.div>
+            <motion.div
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="space-y-3"
+            >
+              <Button
+                onClick={handleEnter}
+                className="w-full h-14 bg-gradient-to-r from-[#ffc5d0] via-[#ff8a8a] to-[#ff9b4d] hover:from-[#ffd0da] hover:via-[#ff9b9b] hover:to-[#ffae6b] text-white font-bold text-lg rounded-2xl shadow-2xl shadow-pink-300/40 transition-all duration-300 hover:shadow-pink-300/50 hover:scale-[1.02]"
+              >
+                <Sparkles className="w-5 h-5 mr-2" strokeWidth={2} />
+                Enter studygo
+              </Button>
+              <p className="text-center text-xs text-black font-medium mt-3">
+                Australian Schools Edition • Demo v1.0
+              </p>
+            </motion.div>
+          </motion.div>
+        ) : (
+            <motion.div
+              key="auth"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="relative z-10 max-w-md w-full mx-4"
+            >
+              <div className="bg-gradient-to-br from-[#ffe6f0]/95 via-[#ffd6e8]/95 to-[#ffe6de]/95 backdrop-blur-2xl rounded-3xl p-8 shadow-2xl shadow-pink-300/60 border border-[#ffb3c6]/80">
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center gap-2 rounded-2xl border-2 border-[#2a7a76]/80 bg-[#1E615D] pl-3 pr-4 py-2.5 mb-4">
+                  <StudyGoLogo className="w-10 h-10 flex-shrink-0" />
+                  <span className="text-white font-bold text-lg tracking-tight lowercase">studygo</span>
+                </div>
+                <h2 className="text-2xl font-black text-black mb-1">
+                  {mode === "login" ? "Welcome Back!" : "Join studygo"}
+                </h2>
+                <p className="text-black text-sm font-semibold">
+                  {mode === "login" ? "Log in to continue your journey" : "Create your account to start"}
+                </p>
+              </div>
+              <form onSubmit={handleAuth} className="space-y-4">
+                {mode === "signup" && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <Input
+                        placeholder="Full Name"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        className="pl-10 bg-white border-2 border-pink-200 text-slate-800 placeholder:text-slate-400 h-12 rounded-xl focus:border-pink-400 focus:ring-pink-300"
+                      />
+                    </div>
+                  </motion.div>
+                )}
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                    type="email"
+                    placeholder="Email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="pl-10 bg-white border-2 border-pink-200 text-slate-800 placeholder:text-slate-400 h-12 rounded-xl focus:border-pink-400 focus:ring-pink-300"
+                    required
+                  />
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                    type="password"
+                    placeholder="Password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="pl-10 bg-white border-2 border-pink-200 text-slate-800 placeholder:text-slate-400 h-12 rounded-xl focus:border-pink-400 focus:ring-pink-300"
+                    required
+                  />
+                </div>
+                {authError && (
+                  <p className="text-sm text-red-600 font-semibold bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+                    {authError}
+                  </p>
+                )}
+                <Button
+                  type="submit"
+                  className="w-full h-12 bg-gradient-to-r from-[#ffc5d0] via-[#ff8a8a] to-[#ff9b4d] hover:from-[#ffd0da] hover:via-[#ff9b9b] hover:to-[#ffae6b] text-white font-bold rounded-xl shadow-lg shadow-pink-300/30"
+                >
+                  {authLoading ? "Please wait…" : mode === "login" ? "Log In" : "Sign Up"}
+                  {!authLoading && <ArrowRight className="w-4 h-4 ml-2" />}
+                </Button>
+              </form>
+              <div className="mt-6 text-center">
+                <button
+                  type="button"
+                  onClick={() => setMode(mode === "login" ? "signup" : "login")}
+                  className="text-sm text-black hover:underline font-medium"
+                >
+                  {mode === "login" ? (
+                    <>Don&apos;t have an account? <span className="font-bold">Sign Up</span></>
+                  ) : (
+                    <>Already have an account? <span className="font-bold">Log In</span></>
+                  )}
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAuth(false)}
+                className="mt-4 text-xs text-black hover:underline mx-auto block font-semibold"
+              >
+                ← Back to home
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
