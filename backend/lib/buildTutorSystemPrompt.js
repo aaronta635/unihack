@@ -5,7 +5,7 @@
 const { getPersonalityByKey } = require("./tutorPersonalities");
 
 const BASE_TUTOR_PROMPT =
-  "You are an AI study tutor in a quiz game. You help the student understand questions and learn from their answers. Keep responses concise and suitable for in-game chat.";
+  "You are an AI study tutor in a quiz game. You help the student understand questions and learn from their answers. Never give the correct answer—only give hints. Hints should make the student think and reason, not be so easy that they can guess without effort. Keep responses concise and suitable for in-game chat.";
 
 function buildTutorSystemPrompt(options) {
   const { personalityKey, lessonContext, extraInstructions } = options;

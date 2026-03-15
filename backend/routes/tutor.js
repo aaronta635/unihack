@@ -6,7 +6,7 @@ const { getPersonalityByKey } = require("../lib/tutorPersonalities");
 
 /** Map personality key to OpenAI TTS voice (alloy, echo, fable, onyx, nova, shimmer). */
 const PERSONALITY_TO_VOICE = {
-  "best-friend": "nova",
+  "best-friend": "shimmer",
 };
 
 /** OpenAI client for TTS (voice). Uses OPENAI_API_KEY only. */
@@ -47,10 +47,13 @@ router.post("/chat", express.json(), async (req, res) => {
       lessonContext: typeof lessonContext === "string" ? lessonContext : undefined,
     });
 
-    const modelToUse = personality?.fineTunedModel;
-    if (!modelToUse) {
+    const modelToUse =
+      (personality && personality.fineTunedModel) ||
+      process.env.FT_MODEL_BEST_FRIEND;
+    if (!modelToUse || typeof modelToUse !== "string" || !modelToUse.trim()) {
       return res.status(500).json({
-        error: "FT_MODEL_BEST_FRIEND is required. Set it in backend .env.",
+        error:
+          "FT_MODEL_BEST_FRIEND is required. Add FT_MODEL_BEST_FRIEND=ft:your-model-id to backend/.env and restart the server. Check server console for .env path.",
       });
     }
 
@@ -69,11 +72,16 @@ router.post("/chat", express.json(), async (req, res) => {
       ],
     });
 
-    const reply = completion.choices[0]?.message?.content?.trim() ?? "I'm not sure how to respond. Try again.";
+    const rawContent = completion.choices?.[0]?.message?.content;
+    const reply =
+      typeof rawContent === "string" && rawContent.trim()
+        ? rawContent.trim()
+        : "I'm not sure how to respond. Try again.";
     res.json({ reply });
   } catch (err) {
-    console.error("Tutor chat error:", err);
-    res.status(500).json({ error: err.message || "Tutor request failed" });
+    const apiMessage = err.error?.message || err.message || "Tutor request failed";
+    console.error("Tutor chat error:", apiMessage, err);
+    res.status(500).json({ error: apiMessage });
   }
 });
 
@@ -89,13 +97,22 @@ router.post("/speech", express.json(), async (req, res) => {
     if (!input) {
       return res.status(400).json({ error: "text is required and must not be empty" });
     }
+    const personality = getPersonalityByKey(personalityKey);
     const voice = getVoiceForPersonality(personalityKey);
+    const model = process.env.TUTOR_TTS_MODEL || "gpt-4o-mini-tts";
     const openai = getOpenAI();
-    const response = await openai.audio.speech.create({
-      model: process.env.TUTOR_TTS_MODEL || "tts-1",
+    const payload = {
+      model,
       voice,
       input: input.slice(0, 4096),
-    });
+    };
+    if (model.includes("gpt-4o-mini-tts")) {
+      const instructions =
+        (personality && personality.ttsInstructions) ||
+        "Speak naturally with clear, friendly intonation.";
+      payload.instructions = String(instructions).slice(0, 4096);
+    }
+    const response = await openai.audio.speech.create(payload);
     const buffer = Buffer.from(await response.arrayBuffer());
     res.setHeader("Content-Type", "audio/mpeg");
     res.send(buffer);

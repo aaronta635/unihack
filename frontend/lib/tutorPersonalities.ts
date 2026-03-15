@@ -36,8 +36,8 @@ export function getPersonalityFallbackMessages(key: string): {
   wrong: (correctLetter: string, correctText: string) => string;
 } {
   const bestFriend = {
-    welcome: "Hey! Quick question — pick the answer you think is right, and we'll go from there.",
-    correct: "Yes! That's the one. +10 points — you're on a roll!",
+    welcome: "Hey, let's start",
+    correct: "Yes! That's the one. +10 points, you're on a roll!",
     wrong: (correctLetter: string, correctText: string) =>
       `Oops, not this time. It's ${correctLetter}: ${correctText}. No worries — next one!`,
   };

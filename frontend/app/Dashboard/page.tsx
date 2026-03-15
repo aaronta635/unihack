@@ -3,10 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { LogOut, Gamepad2, Menu, Swords } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api/client";
-import { LogOut, Gamepad2, Menu, Shield, ShieldOff, GraduationCap } from "lucide-react";
+import { LogOut, Gamepad2, Menu, Swords, Shield, ShieldOff, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AnimeBackground from "@/components/game/Background";
 import CourseSidebar from "@/components/dashboard/CourseSidebar";
@@ -88,6 +87,8 @@ export default function Dashboard() {
             >
               <Swords className="w-4 h-4 mr-2" />
               Battle Demo
+            </Button>
+            <Button
               variant="outline"
               size="sm"
               onClick={() => setAdmin(!isAdmin)}
