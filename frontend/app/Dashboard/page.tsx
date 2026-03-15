@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import AnimeBackground from "@/components/game/Background";
 import CourseSidebar from "@/components/dashboard/CourseSidebar";
 import Leaderboard from "@/components/dashboard/Leaderboard";
+import StatsCard from "@/components/dashboard/StatsCard";
 import { useAdminMode } from "@/contexts/AdminModeContext";
 import StudyGoLogo from "@/components/StudyGoLogo";
 
@@ -83,6 +84,12 @@ export default function Dashboard() {
     queryFn: () => api.entities.Score.list("-score", 50),
   });
 
+  const { data: stats, isLoading: statsLoading } = useQuery({
+    queryKey: ["stats"],
+    queryFn: () => api.stats.get(),
+    enabled: !!user,
+  });
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       <AnimeBackground />
@@ -103,11 +110,11 @@ export default function Dashboard() {
               </>
             ) : (
               <>
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#ffc5d0] to-[#ff8a8a] flex items-center justify-center shadow-md ring-2 ring-[#ffd6e8]/80" title="StudyQuest">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#ffc5d0] to-[#ff8a8a] flex items-center justify-center shadow-md ring-2 ring-[#ffd6e8]/80" title="StudyGo">
                   <GraduationCap className="w-5 h-5 text-white" strokeWidth={2.2} />
                 </div>
                 <div>
-                  <h1 className="text-lg font-black text-[#4a2b3e]">StudyQuest</h1>
+                  <h1 className="text-lg font-black text-[#4a2b3e]">StudyGo</h1>
                   <p className="text-xs text-[#8b5a7a] font-semibold">
                     {user ? `Welcome, ${displayName}` : "Dashboard"}
                   </p>
@@ -167,6 +174,20 @@ export default function Dashboard() {
             >
               Hello, {displayName}
             </p>
+          </motion.section>
+
+          {/* Stats: attack, defense, XP (when logged in) */}
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+          >
+            <StatsCard
+              stats={stats ?? null}
+              isLoading={!!user && statsLoading}
+              isLoggedIn={!!user}
+              onStatsUpdated={() => queryClient.invalidateQueries({ queryKey: ["stats"] })}
+            />
           </motion.section>
 
           {/* Entry to battlefield: choose course & week on Arena page */}

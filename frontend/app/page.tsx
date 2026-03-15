@@ -110,7 +110,7 @@ export default function Home() {
                 </div>
               </motion.div>
               <h1 className="text-5xl md:text-6xl font-black text-[#4a2b3e] mb-3 drop-shadow-lg">
-                StudyQuest
+                StudyGo
               </h1>
               <p className="text-slate-700 text-lg font-semibold">
                 Learn. Play.{" "}
@@ -153,7 +153,7 @@ export default function Home() {
                 className="w-full h-14 bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 hover:from-pink-600 hover:via-purple-600 hover:to-cyan-600 text-white font-bold text-lg rounded-2xl shadow-2xl shadow-purple-500/25 transition-all duration-300 hover:shadow-purple-500/40 hover:scale-[1.02]"
               >
                 <Sparkles className="w-5 h-5 mr-2" />
-                Enter StudyQuest
+                Enter StudyGo
               </Button>
               <p className="text-center text-xs text-slate-600/80 font-medium mt-3">
                 Australian Schools Edition • Demo v1.0
@@ -173,7 +173,7 @@ export default function Home() {
                   <Gamepad2 className="w-8 h-8 text-white" />
                 </div>
                 <h2 className="text-2xl font-black text-[#4a2b3e] mb-1">
-                  {mode === "login" ? "Welcome Back!" : "Join StudyQuest"}
+                  {mode === "login" ? "Welcome Back!" : "Join StudyGo"}
                 </h2>
                 <p className="text-slate-600 text-sm font-semibold">
                   {mode === "login" ? "Log in to continue your journey" : "Create your account to start"}

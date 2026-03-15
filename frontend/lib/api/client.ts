@@ -174,20 +174,15 @@ const entities = {
     update: (_id?: string, _data?: unknown) => Promise.resolve(),
   },
   Score: {
-    // order is ignored for now; limit used for backend
+    // Always fetch from real API so dashboard and course leaderboards show DB data
     async list(_order?: string, limit = 100): Promise<ScoreEntry[]> {
-      if (USE_MOCK_ENTITIES) {
-        const combined = [...mockScoresCreatedThisSession, ...MOCK_SCORES];
-        combined.sort((a, b) => b.score - a.score);
-        return combined;
-      }
-
-      const url = `${API_BASE}/api/leaderboard?limit=${limit}`;
-      const res = await fetch(url);
-      if (!res.ok) {
-        console.error("Failed to load leaderboard from API", res.status);
-        return [];
-      }
+      try {
+        const url = `${API_BASE}/api/leaderboard?limit=${limit}`;
+        const res = await fetch(url);
+        if (!res.ok) {
+          console.error("Failed to load leaderboard from API", res.status);
+          return USE_MOCK_ENTITIES ? [...mockScoresCreatedThisSession, ...MOCK_SCORES].sort((a, b) => b.score - a.score) : [];
+        }
       const json = await res.json();
       const rows = (json.leaderboard ?? []) as any[];
       return rows.map((r) => ({
@@ -201,26 +196,13 @@ const entities = {
         total_questions: r.total_questions ?? undefined,
         time_taken_seconds: r.time_taken_seconds ?? undefined,
       }));
+      } catch {
+        return USE_MOCK_ENTITIES ? [...mockScoresCreatedThisSession, ...MOCK_SCORES].sort((a, b) => b.score - a.score) : [];
+      }
     },
 
     async create(data?: Record<string, unknown>) {
       if (!data) return;
-
-      if (USE_MOCK_ENTITIES) {
-        const newEntry: ScoreEntry = {
-          id: `mock-${Date.now()}`,
-          player_name: (data.player_name as string) ?? "Anonymous",
-          player_email: (data.player_email as string) ?? "",
-          course_id: data.course_id as string | undefined,
-          course_title: (data.course_title as string) ?? undefined,
-          week_number: (data.week_number as number) ?? undefined,
-          score: (data.score as number) ?? 0,
-          total_questions: (data.total_questions as number) ?? undefined,
-          time_taken_seconds: (data.time_taken_seconds as number) ?? undefined,
-        };
-        mockScoresCreatedThisSession.push(newEntry);
-        return;
-      }
 
       const payload = {
         player_name: data.player_name ?? "Anonymous",
@@ -234,14 +216,100 @@ const entities = {
 
       const res = await fetch(`${API_BASE}/api/scores`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         console.error("Failed to submit score", res.status, err);
+        return;
+      }
+      if (USE_MOCK_ENTITIES) {
+        mockScoresCreatedThisSession.push({
+          id: `mock-${Date.now()}`,
+          player_name: (payload.player_name as string) ?? "Anonymous",
+          player_email: (payload.player_email as string) ?? "",
+          course_id: payload.course_id as string | undefined,
+          course_title: (data.course_title as string) ?? undefined,
+          week_number: payload.week_number as number | undefined,
+          score: payload.score as number,
+          total_questions: payload.questions_answered as number | undefined,
+          time_taken_seconds: (data.time_taken_seconds as number) ?? undefined,
+        });
       }
     },
+  },
+};
+
+export type PlayerStats = {
+  attack: number;
+  defense: number;
+  xp: number;
+  level: number;
+  stat_points: number;
+  xp_in_current_level: number;
+  xp_to_next_level: number;
+  xp_per_level: number;
+};
+
+const stats = {
+  async get(): Promise<PlayerStats | null> {
+    const headers = getAuthHeaders();
+    if (!headers.Authorization) return null;
+    try {
+      const res = await fetch(`${API_BASE}/api/stats`, { headers });
+      if (!res.ok) return null;
+      const data = await res.json();
+      const xp = Number(data.xp) ?? 0;
+      const level = Number(data.level) ?? 0;
+      const xpPerLevel = Number(data.xp_per_level) ?? 100;
+      const xpInCurrent = Number(data.xp_in_current_level) ?? (xp - level * xpPerLevel);
+      const xpToNext = Number(data.xp_to_next_level) ?? (xpPerLevel - xpInCurrent);
+      return {
+        attack: Number(data.attack) ?? 0,
+        defense: Number(data.defense) ?? 0,
+        xp,
+        level,
+        stat_points: Number(data.stat_points) ?? 0,
+        xp_in_current_level: xpInCurrent,
+        xp_to_next_level: xpToNext,
+        xp_per_level: xpPerLevel,
+      };
+    } catch {
+      return null;
+    }
+  },
+
+  /** Spend 1 stat point on +1 Attack or +1 Defense. Returns updated stats or null. */
+  async allocate(type: "attack" | "defense"): Promise<PlayerStats | null> {
+    const headers = getAuthHeaders();
+    if (!headers.Authorization) return null;
+    try {
+      const res = await fetch(`${API_BASE}/api/stats`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ type }),
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      const xp = Number(data.xp) ?? 0;
+      const level = Number(data.level) ?? 0;
+      const xpPerLevel = Number(data.xp_per_level) ?? 100;
+      const xpInCurrent = Number(data.xp_in_current_level) ?? 0;
+      const xpToNext = Number(data.xp_to_next_level) ?? xpPerLevel;
+      return {
+        attack: Number(data.attack) ?? 0,
+        defense: Number(data.defense) ?? 0,
+        xp,
+        level,
+        stat_points: Number(data.stat_points) ?? 0,
+        xp_in_current_level: xpInCurrent,
+        xp_to_next_level: xpToNext,
+        xp_per_level: xpPerLevel,
+      };
+    } catch {
+      return null;
+    }
   },
 };
 
@@ -301,4 +369,4 @@ const tutor = {
   },
 };
 
-export const api = { auth, entities, integrations, tutor };
+export const api = { auth, entities, integrations, tutor, stats };

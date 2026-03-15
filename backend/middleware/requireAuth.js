@@ -61,4 +61,20 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-module.exports = { getBearerToken, requireAuth, requireAdmin };
+/**
+ * Optional auth: if Bearer token present and valid, sets req.user; otherwise req.user stays undefined.
+ * Does not send 401. Use for routes that work for both anonymous and logged-in users (e.g. POST /api/scores).
+ */
+async function optionalAuth(req, res, next) {
+  const token = getBearerToken(req);
+  if (!token) {
+    return next();
+  }
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (!error && user) req.user = user;
+  } catch (_) {}
+  next();
+}
+
+module.exports = { getBearerToken, requireAuth, requireAdmin, optionalAuth };

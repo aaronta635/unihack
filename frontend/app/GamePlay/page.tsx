@@ -29,11 +29,15 @@ export default function GamePlay() {
   const [gameState, setGameState] = useState<"playing" | "complete">("playing");
   const [finalScore, setFinalScore] = useState({ score: 0, total: 0 });
   const [showControlsHint, setShowControlsHint] = useState(true);
-  const [user] = useState({
-    full_name: "Demo User",
-    email: "demo@studyquest.com",
-  });
   const [startTime] = useState(Date.now());
+
+  const { data: meData } = useQuery({
+    queryKey: ["auth", "me"],
+    queryFn: () => api.auth.me(),
+  });
+  const user = meData?.user as { user_metadata?: { full_name?: string; display_name?: string }; email?: string } | null | undefined;
+  const playerName = user?.user_metadata?.full_name ?? user?.user_metadata?.display_name ?? user?.email ?? "Anonymous";
+  const playerEmail = user?.email ?? "";
 
   type CourseData = {
     id: string;
@@ -101,8 +105,8 @@ export default function GamePlay() {
     setGameState("complete");
     const timeTaken = Math.round((Date.now() - startTime) / 1000);
     await api.entities.Score.create({
-      player_name: user?.full_name || user?.email || "Anonymous",
-      player_email: user?.email ?? "",
+      player_name: playerName,
+      player_email: playerEmail,
       course_id: courseId,
       course_title: courseTitle,
       week_number: weekNumber,
@@ -111,6 +115,7 @@ export default function GamePlay() {
       time_taken_seconds: timeTaken,
     });
     await queryClient.invalidateQueries({ queryKey: ["scores"] });
+    await queryClient.invalidateQueries({ queryKey: ["stats"] });
   };
 
   const handleRestart = () => {
