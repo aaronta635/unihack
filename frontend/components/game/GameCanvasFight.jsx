@@ -8,6 +8,7 @@ import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { X, Search } from "lucide-react";
+import { getArenaSocket } from "@/lib/arenaSocket";
 
 /** Default ground: one large plane extending in all directions; arena sits on it. */
 const GROUND_SIZE = 6000;
@@ -615,23 +616,35 @@ export default function GameCanvasFight({
   playerModelUrl = "/model.obj",
   courseId,
   weekNumber,
-  /** WebSocket URL for 2-player. When set, connect and sync positions. Other device uses ?player=charmander and same wsUrl. */
+  roomId,
   wsUrl,
-  /** "pikachu" | "charmander" – who this client controls. Default pikachu. Use charmander on the other device. */
   role: roleProp,
+  /** Display name for the current player (from auth / Arena). */
+  playerName: playerNameProp,
+  /** Display name for the opponent (from Arena match_found). */
+  opponentName: opponentNameProp,
+  /** Called when opponent leaves the arena (in 3D or after closing 2D); parent can redirect to /Arena. */
+  onOpponentLeftArena,
 }) {
   const mountRef = useRef(null);
   const [nearLantern, setNearLantern] = useState(false);
   const [showBattleView, setShowBattleView] = useState(false);
+  const [waitingForOpponent, setWaitingForOpponent] = useState(false);
   const [showControlsHint, setShowControlsHint] = useState(true);
+  const [opponentLeftMessage, setOpponentLeftMessage] = useState(null);
 
   const socketRef = useRef(null);
   const remotePositionRef = useRef({ x: 0, z: 50, rotationY: 0 });
   const lastSendTimeRef = useRef(0);
   const sendPositionRef = useRef(() => {});
+  const turnOwnerRef = useRef(null);
+  const nameLabel1Ref = useRef(null);
+  const nameLabel2Ref = useRef(null);
 
   const role = roleProp ?? "pikachu";
   const isCharmander = role === "charmander";
+  const playerName = playerNameProp ?? (isCharmander ? "Charmander" : "Pikachu");
+  const opponentName = opponentNameProp ?? (isCharmander ? "Pikachu" : "Charmander");
 
   const [battlePhase, setBattlePhase] = useState("menu");
   const [battleMessage, setBattleMessage] = useState("");
@@ -654,7 +667,7 @@ export default function GameCanvasFight({
   }, [showBattleView]);
 
   useEffect(() => {
-    if (showBattleView) {
+    if (showBattleView && !roomId) {
       setBattlePhase("menu");
       setBattleMessage("");
       setPlayerHp(PIKACHU_HP);
@@ -662,7 +675,7 @@ export default function GameCanvasFight({
       setEnemyHp(ENEMY_HP);
       setEnemyMaxHp(ENEMY_HP);
     }
-  }, [showBattleView]);
+  }, [showBattleView, roomId]);
 
   useEffect(() => {
     if (courseId && weekNumber) {
@@ -680,11 +693,150 @@ export default function GameCanvasFight({
     }
   }, [courseId, weekNumber]);
 
-  // WebSocket 2-player sync: connect to wsUrl; send our position (role + x, z, rotationY).
-  // Server should broadcast each client's messages to the other client in the same room.
-  // Incoming message shape: { type: "position", role: "pikachu"|"charmander", x, z, rotationY }
+  // Arena (Socket.IO): when roomId is set, sync position with the other player in the room so both see each other move
   useEffect(() => {
-    if (!wsUrl || typeof window === "undefined") return;
+    if (!roomId || typeof window === "undefined") return;
+    const arenaSocket = getArenaSocket();
+    const arenaRole = role === "charmander" ? "player2" : "player1";
+    const onConnect = () => {};
+    const onConnectError = () => {};
+    arenaSocket.on("connect", onConnect);
+    arenaSocket.on("connect_error", onConnectError);
+    const handler = (data) => {
+      if (data.role === arenaRole) return;
+      remotePositionRef.current = {
+        x: Number(data.x) || 0,
+        z: Number(data.z) ?? 50,
+        rotationY: Number(data.rotationY) || 0,
+      };
+    };
+    arenaSocket.on("position_update", handler);
+    const onWaitingForOpponent = () => setWaitingForOpponent(true);
+    const onBothReady = () => {
+      setWaitingForOpponent(false);
+      setShowBattleView(true);
+    };
+    arenaSocket.on("waiting_for_opponent", onWaitingForOpponent);
+    arenaSocket.on("both_ready", onBothReady);
+
+    const onGameStart = (data) => {
+      const h1 = data.health1 ?? 100;
+      const h2 = data.health2 ?? 100;
+      if (arenaRole === "player1") {
+        setPlayerHp(h1);
+        setEnemyHp(h2);
+      } else {
+        setPlayerHp(h2);
+        setEnemyHp(h1);
+      }
+      setPlayerMaxHp(100);
+      setEnemyMaxHp(100);
+      setBattlePhase("fight");
+      setBattleMessage("");
+    };
+    const onTurnStart = (data) => {
+      turnOwnerRef.current = data.turnOwner ?? null;
+      setBattleMessage("");
+      setBattleQuestion(data.question ? { question: data.question.question || "", options: data.question.options || [], correct_index: data.question.correct_index ?? 0 } : null);
+      setShowBattleQuestion(true);
+      setQuestionRevealed(false);
+      setSelectedOption(null);
+      setBattlePhase("fight");
+    };
+    const onWrongAnswer = () => {
+      setQuestionRevealed(true);
+      setBattleMessage("Wrong! No attack this turn.");
+      setTimeout(() => {
+        setBattleMessage("");
+        setBattlePhase("menu");
+        setQuestionRevealed(false);
+      }, 1200);
+    };
+    const onYourTurnAction = () => {
+      setShowBattleQuestion(false);
+      setBattleQuestion(null);
+      setBattlePhase("action");
+      setBattleMessage("Correct! Choose an action.");
+    };
+    const onActionResult = (data) => {
+      const h1 = data.health1 ?? 0;
+      const h2 = data.health2 ?? 0;
+      if (arenaRole === "player1") {
+        setPlayerHp(h1);
+        setEnemyHp(h2);
+      } else {
+        setPlayerHp(h2);
+        setEnemyHp(h1);
+      }
+      setBattlePhase("message");
+      setBattleMessage("Attack hit!");
+      setTimeout(() => {
+        setBattleMessage("");
+        setBattlePhase("menu");
+      }, 1000);
+    };
+    const onGameOver = (data) => {
+      const won = data.winner === arenaRole;
+      setBattlePhase(won ? "won" : "lost");
+      setBattleMessage(won ? `${opponentName} fainted! You win!` : `${playerName} fainted! You lost...`);
+      setTimeout(() => setShowBattleView(false), 2000);
+    };
+    const onOpponentLeft = () => {
+      if (battleOpenRef.current) {
+        setBattlePhase("won");
+        setBattleMessage("Opponent left. You win!");
+        setTimeout(() => {
+          setShowBattleView(false);
+          if (typeof onOpponentLeftArena === "function") {
+            setTimeout(onOpponentLeftArena, 500);
+          }
+        }, 2000);
+      } else {
+        setOpponentLeftMessage("Opponent left the arena. Returning to Arena…");
+        setTimeout(() => {
+          if (typeof onOpponentLeftArena === "function") onOpponentLeftArena();
+        }, 2000);
+      }
+    };
+    const onGameError = (data) => {
+      setBattleMessage(data.message ?? "Something went wrong.");
+    };
+
+    arenaSocket.on("game_start", onGameStart);
+    arenaSocket.on("turn_start", onTurnStart);
+    arenaSocket.on("wrong_answer", onWrongAnswer);
+    arenaSocket.on("your_turn_action", onYourTurnAction);
+    arenaSocket.on("action_result", onActionResult);
+    arenaSocket.on("game_over", onGameOver);
+    arenaSocket.on("opponent_left", onOpponentLeft);
+    arenaSocket.on("game_error", onGameError);
+    sendPositionRef.current = (x, z, rotationY) => {
+      const now = Date.now();
+      if (now - lastSendTimeRef.current < POSITION_SYNC_INTERVAL_MS) return;
+      lastSendTimeRef.current = now;
+      arenaSocket.emit("position_update", { roomId, role: arenaRole, x, z, rotationY });
+    };
+    return () => {
+      arenaSocket.off("position_update", handler);
+      arenaSocket.off("waiting_for_opponent", onWaitingForOpponent);
+      arenaSocket.off("both_ready", onBothReady);
+      arenaSocket.off("game_start", onGameStart);
+      arenaSocket.off("turn_start", onTurnStart);
+      arenaSocket.off("wrong_answer", onWrongAnswer);
+      arenaSocket.off("your_turn_action", onYourTurnAction);
+      arenaSocket.off("action_result", onActionResult);
+      arenaSocket.off("game_over", onGameOver);
+      arenaSocket.off("opponent_left", onOpponentLeft);
+      arenaSocket.off("game_error", onGameError);
+      arenaSocket.off("connect", onConnect);
+      arenaSocket.off("connect_error", onConnectError);
+      sendPositionRef.current = () => {};
+    };
+  }, [roomId, role]);
+
+  // Raw WebSocket 2-player sync (when no roomId): connect to wsUrl; send our position (role + x, z, rotationY)
+  useEffect(() => {
+    if (roomId || !wsUrl || typeof window === "undefined") return;
     const ws = new WebSocket(wsUrl);
     socketRef.current = ws;
     ws.onmessage = (e) => {
@@ -711,10 +863,8 @@ export default function GameCanvasFight({
       ws.close();
       socketRef.current = null;
     };
-  }, [wsUrl, role]);
+  }, [roomId, wsUrl, role]);
 
-  const playerName = isCharmander ? "Charmander" : "Pikachu";
-  const opponentName = isCharmander ? "Pikachu" : "Charmander";
   const playerMoves = isCharmander ? ENEMY_MOVES : PIKACHU_MOVES;
 
   const applyMoveResult = (hit, move) => {
@@ -779,6 +929,19 @@ export default function GameCanvasFight({
   const onQuestionOptionSelect = (optionIndex) => {
     if (!battleQuestion || questionRevealed) return;
     setSelectedOption(optionIndex);
+    if (roomId) {
+      const ar = role === "charmander" ? "player2" : "player1";
+      if (turnOwnerRef.current === ar) {
+        getArenaSocket().emit("submit_answer", { roomId, optionIndex });
+      }
+      setQuestionRevealed(true);
+      setTimeout(() => {
+        setShowBattleQuestion(false);
+        setBattleQuestion(null);
+        setSelectedOption(null);
+      }, 800);
+      return;
+    }
     const correct = optionIndex === battleQuestion.correct_index;
     resolveQuestion(correct);
   };
@@ -874,6 +1037,7 @@ export default function GameCanvasFight({
 
     const raycaster = new THREE.Raycaster();
     const rayOrigin = new THREE.Vector3();
+    const vecProj = new THREE.Vector3();
     const rayDir = new THREE.Vector3(0, -1, 0);
     const groundOffset = 0;
 
@@ -1181,6 +1345,27 @@ export default function GameCanvasFight({
       camera.position.z += (cameraTarget.z - camera.position.z) * cameraDamp;
       camera.lookAt(lookAtTarget);
 
+      if (currentMount && nameLabel1Ref.current && nameLabel2Ref.current) {
+        const rect = currentMount.getBoundingClientRect();
+        const w = rect.width;
+        const h = rect.height;
+        const labelOffset = new THREE.Vector3(0, 2.2, 0);
+        vecProj.copy(player.position).add(labelOffset).project(camera);
+        const x1 = (vecProj.x * 0.5 + 0.5) * w;
+        const y1 = (1 - (vecProj.y * 0.5 + 0.5)) * h;
+        const vis1 = vecProj.z > -1 && vecProj.z <= 1;
+        vecProj.copy(charmanderGroup.position).add(labelOffset).project(camera);
+        const x2 = (vecProj.x * 0.5 + 0.5) * w;
+        const y2 = (1 - (vecProj.y * 0.5 + 0.5)) * h;
+        const vis2 = vecProj.z > -1 && vecProj.z <= 1;
+        nameLabel1Ref.current.style.left = `${x1}px`;
+        nameLabel1Ref.current.style.top = `${y1}px`;
+        nameLabel1Ref.current.style.visibility = vis1 ? "visible" : "hidden";
+        nameLabel2Ref.current.style.left = `${x2}px`;
+        nameLabel2Ref.current.style.top = `${y2}px`;
+        nameLabel2Ref.current.style.visibility = vis2 ? "visible" : "hidden";
+      }
+
       renderer.render(scene, camera);
     };
     animate();
@@ -1200,17 +1385,44 @@ export default function GameCanvasFight({
 
   useEffect(() => {
     const handleSpace = (e) => {
-      if (e.key !== " " || !nearLantern || showBattleView) return;
+      if (e.key !== " " || !nearLantern || showBattleView || waitingForOpponent) return;
       e.preventDefault();
-      setShowBattleView(true);
+      if (roomId) {
+        const arenaSocket = getArenaSocket();
+        arenaSocket.emit("ready_for_battle", { roomId });
+        setWaitingForOpponent(true);
+      } else {
+        setShowBattleView(true);
+      }
     };
     window.addEventListener("keydown", handleSpace);
     return () => window.removeEventListener("keydown", handleSpace);
-  }, [nearLantern, showBattleView]);
+  }, [nearLantern, showBattleView, waitingForOpponent, roomId]);
 
   return (
     <>
-      <div ref={mountRef} className="absolute inset-0 w-full h-full min-w-0 min-h-0" />
+      <div className="relative w-full h-full min-w-0 min-h-0">
+        <div ref={mountRef} className="absolute inset-0 w-full h-full min-w-0 min-h-0" />
+        {/* Name labels follow each 3D model (position set in animation loop) */}
+        <div
+          ref={nameLabel1Ref}
+          className="absolute z-10 pointer-events-none -translate-x-1/2 -translate-y-full"
+          style={{ visibility: "hidden" }}
+        >
+          <span className="px-3 py-1 rounded-lg bg-black/60 text-white text-sm font-bold shadow-lg border border-white/20 whitespace-nowrap">
+            {role === "charmander" ? opponentName : playerName}
+          </span>
+        </div>
+        <div
+          ref={nameLabel2Ref}
+          className="absolute z-10 pointer-events-none -translate-x-1/2 -translate-y-full"
+          style={{ visibility: "hidden" }}
+        >
+          <span className="px-3 py-1 rounded-lg bg-black/60 text-white text-sm font-bold shadow-lg border border-white/20 whitespace-nowrap">
+            {role === "charmander" ? playerName : opponentName}
+          </span>
+        </div>
+      </div>
       {showControlsHint && (
         <div className="absolute bottom-6 left-4 max-w-[200px] bg-black/70 text-white px-3 py-2.5 rounded-lg text-xs pointer-events-none">
           <div className="font-semibold mb-1">Controls</div>
@@ -1220,9 +1432,30 @@ export default function GameCanvasFight({
           )}
         </div>
       )}
-      {nearLantern && !showControlsHint && (
+      {nearLantern && !showControlsHint && !waitingForOpponent && (
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-black/75 text-amber-300 px-4 py-2.5 rounded-lg text-sm font-bold animate-pulse pointer-events-none shadow-lg border border-amber-500/40">
           Press SPACE to interact
+        </div>
+      )}
+      {waitingForOpponent && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/50 pointer-events-none">
+          <div className="bg-slate-900/95 backdrop-blur border-2 border-amber-500/50 rounded-2xl px-8 py-6 shadow-xl text-center max-w-sm">
+            <p className="text-amber-200 font-bold text-lg mb-2">Waiting for opponent</p>
+            <p className="text-slate-300 text-sm">The other player must press SPACE near the lantern to enter the 2D battle.</p>
+            <div className="mt-4 flex justify-center">
+              <span className="inline-block w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" aria-hidden />
+            </div>
+          </div>
+        </div>
+      )}
+      {opponentLeftMessage && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 pointer-events-none">
+          <div className="bg-slate-900/95 backdrop-blur border-2 border-amber-500/50 rounded-2xl px-8 py-6 shadow-xl text-center max-w-sm">
+            <p className="text-amber-200 font-bold text-lg">{opponentLeftMessage}</p>
+            <div className="mt-4 flex justify-center">
+              <span className="inline-block w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" aria-hidden />
+            </div>
+          </div>
         </div>
       )}
       <AnimatePresence>
@@ -1302,13 +1535,16 @@ export default function GameCanvasFight({
             {showBattleQuestion && battleQuestion && (
               <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/50 p-4">
                 <div className="bg-gray-200 border-4 border-gray-800 rounded-lg shadow-xl max-w-lg w-full p-4" style={{ fontFamily: "Georgia, serif" }}>
-                  <p className="text-sm font-bold text-amber-800 mb-2">Answer correctly to hit!</p>
+                  <p className="text-sm font-bold text-amber-800 mb-2">
+                    {roomId && turnOwnerRef.current !== (role === "charmander" ? "player2" : "player1") ? "Opponent's turn — wait for them to answer" : "Answer correctly to hit!"}
+                  </p>
                   <p className="font-bold text-black mb-3">{battleQuestion.question}</p>
                   <div className="grid grid-cols-2 gap-2">
                     {battleQuestion.options.map((opt, idx) => {
                       const revealed = questionRevealed;
                       const isCorrect = idx === battleQuestion.correct_index;
                       const isSelected = selectedOption === idx;
+                      const isMyTurn = !roomId || turnOwnerRef.current === (role === "charmander" ? "player2" : "player1");
                       let btnClass = "border-2 border-gray-800 py-2.5 px-2 font-bold text-sm rounded-sm text-left ";
                       if (revealed) {
                         if (isCorrect) btnClass += "bg-green-500 text-white border-green-700";
@@ -1322,7 +1558,7 @@ export default function GameCanvasFight({
                           key={idx}
                           type="button"
                           onClick={() => onQuestionOptionSelect(idx)}
-                          disabled={questionRevealed}
+                          disabled={questionRevealed || (roomId && !isMyTurn)}
                           className={btnClass}
                         >
                           {String.fromCharCode(65 + idx)}. {opt}
@@ -1338,21 +1574,39 @@ export default function GameCanvasFight({
             <div className="border-4 border-gray-900 bg-gray-200 p-3 flex gap-3 shrink-0 mx-2 mb-2">
               <div className="flex-1 border-2 border-gray-800 bg-white p-4 flex items-center gap-2 relative min-h-[88px]">
                 <p className="font-bold text-black text-base" style={{ fontFamily: "Georgia, serif" }}>
-                  {battleMessage || (battlePhase === "fight" ? "Choose a move." : `What will ${playerName} do?`)}
+                  {battleMessage || (battlePhase === "action" ? "Choose an action." : battlePhase === "fight" ? "Choose a move." : `What will ${playerName} do?`)}
                 </p>
                 {battlePhase === "menu" && <Search className="absolute bottom-2 left-2 w-5 h-5 text-gray-700 stroke-[2.5]" aria-hidden />}
               </div>
-              {(battlePhase === "menu" || battlePhase === "fight" || battlePhase === "won" || battlePhase === "lost") && (
+              {(battlePhase === "menu" || battlePhase === "fight" || battlePhase === "action" || battlePhase === "won" || battlePhase === "lost") && (
                 <div className="flex flex-col gap-2.5 w-64">
-                  {battlePhase === "menu" && (
+                  {battlePhase === "menu" && !roomId && (
                     <button type="button" onClick={handleFight} className="border-2 border-gray-800 py-3.5 px-4 font-bold text-white text-sm rounded-sm shadow-sm hover:brightness-110 w-full" style={{ background: "linear-gradient(to bottom, #e87070 0%, #c03030 100%)", fontFamily: "Georgia, serif" }}>FIGHT</button>
                   )}
-                  {battlePhase === "fight" && (
+                  {battlePhase === "menu" && roomId && (
+                    <p className="text-gray-600 text-sm font-bold py-2">Waiting for opponent&apos;s turn...</p>
+                  )}
+                  {battlePhase === "fight" && !roomId && (
                     <div className="grid grid-cols-2 gap-2.5">
                       {playerMoves.map((m) => (
                         <button key={m.name} type="button" onClick={() => handleMove(m)} disabled={enemyHp <= 0} className="border-2 border-gray-800 py-2.5 px-2 font-bold text-slate-900 text-xs rounded-sm shadow-sm hover:brightness-95 bg-amber-100" style={{ fontFamily: "Georgia, serif" }}>{m.name}</button>
                       ))}
                       <button type="button" onClick={backToMenu} className="col-span-2 border-2 border-gray-800 py-2 font-bold text-gray-800 text-sm rounded-sm bg-gray-300 hover:bg-gray-400" style={{ fontFamily: "Georgia, serif" }}>Back</button>
+                    </div>
+                  )}
+                  {battlePhase === "action" && roomId && (
+                    <div className="flex flex-col gap-2">
+                      {["attack", "skill1", "skill2"].map((actionId) => (
+                        <button
+                          key={actionId}
+                          type="button"
+                          onClick={() => getArenaSocket().emit("submit_action", { roomId, actionId })}
+                          className="border-2 border-gray-800 py-2.5 px-3 font-bold text-slate-900 text-sm rounded-sm bg-amber-100 hover:brightness-95"
+                          style={{ fontFamily: "Georgia, serif" }}
+                        >
+                          {actionId === "attack" ? "Attack" : actionId === "skill1" ? "Skill 1" : "Skill 2"}
+                        </button>
+                      ))}
                     </div>
                   )}
                   {(battlePhase === "won" || battlePhase === "lost") && (

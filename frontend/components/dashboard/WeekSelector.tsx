@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Upload, Play, FileText, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { getApiBase, getAuthHeaders } from "@/lib/api/client";
 
 type Week = {
   week_number: number;
@@ -85,22 +86,28 @@ export default function WeekSelector({
   
       try {
         setUploading(true);
-        const base =
-          process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
+        const base = getApiBase();
         const formData = new FormData();
         formData.append("file", file);
         formData.append("course_id", course.id);
         formData.append("week_number", String(weekNum));
-  
+
         const res = await fetch(`${base}/upload/pdf`, {
           method: "POST",
+          headers: getAuthHeaders(),
           body: formData,
         });
-  
+
         if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          console.error("Upload failed", res.status, err);
-          alert("Failed to upload PDF and generate questions.");
+          const err = await res.json().catch(() => ({})) as { error?: string };
+          const msg = err?.error ?? "Failed to upload PDF and generate questions.";
+          if (res.status === 401) {
+            alert("Please log in to upload tutorials.");
+          } else if (res.status === 403) {
+            alert("Only admins can upload tutorials.");
+          } else {
+            alert(msg);
+          }
         } else {
           const json = await res.json().catch(() => ({}));
           console.log("Upload OK", json);

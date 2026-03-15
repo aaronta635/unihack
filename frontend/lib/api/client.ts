@@ -22,24 +22,56 @@ export function getApiBase(): string {
   return "http://localhost:3000";
 }
 
+/** Returns headers with Bearer token when available (for authenticated API calls, e.g. admin upload). */
+export function getAuthHeaders(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  const token = getAuthStorage()?.getItem(AUTH_TOKEN_KEY) ?? null;
+  if (!token) return {};
+  return { Authorization: `Bearer ${token}` };
+}
+
 const API_BASE = getApiBase();
 
 const AUTH_TOKEN_KEY = "access_token";
 const AUTH_REFRESH_KEY = "refresh_token";
 
+/** Use sessionStorage so each tab/window has its own auth; avoids two tabs showing the same user. */
+function getAuthStorage(): Storage | null {
+  return typeof window === "undefined" ? null : window.sessionStorage;
+}
+function getStoredToken(): string | null {
+  return getAuthStorage()?.getItem(AUTH_TOKEN_KEY) ?? null;
+}
+function setStoredTokens(token: string, refresh?: string): void {
+  const s = getAuthStorage();
+  if (!s) return;
+  s.setItem(AUTH_TOKEN_KEY, token);
+  if (refresh) s.setItem(AUTH_REFRESH_KEY, refresh);
+}
+function clearStoredAuth(): void {
+  const s = getAuthStorage();
+  if (!s) return;
+  s.removeItem(AUTH_TOKEN_KEY);
+  s.removeItem(AUTH_REFRESH_KEY);
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem("app_access_token");
+    window.localStorage.removeItem(AUTH_TOKEN_KEY);
+    window.localStorage.removeItem(AUTH_REFRESH_KEY);
+  }
+}
+
 /** In-memory list of scores submitted during this session (so leaderboard updates after playing). */
 let mockScoresCreatedThisSession: ScoreEntry[] = [];
 
 const auth = {
-  async me(): Promise<{ user: { id?: string; email?: string; user_metadata?: { full_name?: string }; [k: string]: unknown } | null; isAuthenticated: boolean }> {
+  async me(): Promise<{ user: { id?: string; email?: string; user_metadata?: { full_name?: string; display_name?: string }; [k: string]: unknown } | null; isAuthenticated: boolean }> {
     if (typeof window === "undefined") return { user: null, isAuthenticated: false };
-    const token = window.localStorage.getItem(AUTH_TOKEN_KEY);
+    const token = getStoredToken();
     if (!token) return { user: null, isAuthenticated: false };
     try {
       const res = await fetch(`${API_BASE}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) {
-        window.localStorage.removeItem(AUTH_TOKEN_KEY);
-        window.localStorage.removeItem(AUTH_REFRESH_KEY);
+        clearStoredAuth();
         return { user: null, isAuthenticated: false };
       }
       const json = await res.json();
@@ -60,8 +92,7 @@ const auth = {
       const token = data.session?.access_token ?? data.access_token;
       const refresh = data.session?.refresh_token ?? data.refresh_token;
       if (token && typeof window !== "undefined") {
-        window.localStorage.setItem(AUTH_TOKEN_KEY, token);
-        if (refresh) window.localStorage.setItem(AUTH_REFRESH_KEY, refresh);
+        setStoredTokens(token, refresh);
       }
       return { user: data.user ?? data };
     } catch (err) {
@@ -82,11 +113,26 @@ const auth = {
       return { user: null, error: err instanceof Error ? err.message : "Signup failed" };
     }
   },
+  /** Persist Admin/Student role for the current user. Call after toggle click. */
+  async updateRole(role: "admin" | "student"): Promise<{ user?: unknown; role?: string; error?: string }> {
+    const token = getStoredToken();
+    if (!token) return { error: "Not logged in" };
+    try {
+      const res = await fetch(`${API_BASE}/auth/me/role`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ role }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return { error: (data as { error?: string }).error ?? "Failed to update role" };
+      return { user: (data as { user?: unknown }).user, role: (data as { role?: string }).role };
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : "Failed to update role" };
+    }
+  },
   logout(redirectUrl?: string) {
     if (typeof window !== "undefined") {
-      window.localStorage.removeItem("app_access_token");
-      window.localStorage.removeItem(AUTH_TOKEN_KEY);
-      window.localStorage.removeItem(AUTH_REFRESH_KEY);
+      clearStoredAuth();
       if (redirectUrl) window.location.href = redirectUrl;
     }
   },

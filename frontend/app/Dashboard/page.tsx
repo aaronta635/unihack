@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api/client";
 import { LogOut, Gamepad2, Menu, Swords, Shield, ShieldOff, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,18 @@ import Leaderboard from "@/components/dashboard/Leaderboard";
 import { useAdminMode } from "@/contexts/AdminModeContext";
 import StudyGoLogo from "@/components/StudyGoLogo";
 
+type UserWithRole = { app_metadata?: { role?: string }; user_metadata?: { role?: string } };
+function isServerAdmin(user: unknown): boolean {
+  const u = user as UserWithRole | null | undefined;
+  return u?.app_metadata?.role === "admin" || u?.user_metadata?.role === "admin";
+}
+
+function getDisplayName(user: { user_metadata?: { display_name?: string; full_name?: string }; email?: string } | null): string {
+  if (!user) return "User";
+  const meta = user.user_metadata;
+  return (meta?.display_name || meta?.full_name || user.email || "User") as string;
+}
+
 const HELLO_FONTS = [
   { name: "Datatype", class: "font-datatype" },
   { name: "Bitcount Prop Double Ink", class: "font-bitcount" },
@@ -20,18 +32,41 @@ const HELLO_FONTS = [
 
 export default function Dashboard() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { isAdmin, setAdmin } = useAdminMode();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [fontIndex, setFontIndex] = useState(0);
   const [useItalic, setUseItalic] = useState(false);
   const [useBold, setUseBold] = useState(true);
+  const [roleUpdating, setRoleUpdating] = useState(false);
 
-  const [user] = useState({
-    full_name: "Demo User",
-    email: "demo@studyquest.com",
+  const { data: meData } = useQuery({
+    queryKey: ["auth", "me"],
+    queryFn: () => api.auth.me(),
   });
+  const user = meData?.user ?? null;
+  const displayName = getDisplayName(user);
 
-  const displayName = user?.full_name || user?.email || "User";
+  // Sync Admin/Student toggle with persisted role from server
+  useEffect(() => {
+    if (user === null || user === undefined) return;
+    setAdmin(isServerAdmin(user));
+  }, [user, setAdmin]);
+
+  const handleToggleRole = async () => {
+    const newRole = isAdmin ? "student" : "admin";
+    setRoleUpdating(true);
+    try {
+      const result = await api.auth.updateRole(newRole);
+      if (result.error) {
+        alert(result.error);
+        return;
+      }
+      await queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
+    } finally {
+      setRoleUpdating(false);
+    }
+  };
 
   // Rotate font every 0.8s with mixed italic, normal, and bold
   useEffect(() => {
@@ -82,16 +117,10 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-2">
             <Button
-              onClick={() => router.push("/GameFight")}
-              className="bg-amber-100 hover:bg-amber-200 border-2 border-amber-400 text-amber-900 font-semibold"
-            >
-              <Swords className="w-4 h-4 mr-2" />
-              Battle Demo
-            </Button>
-            <Button
               variant="outline"
               size="sm"
-              onClick={() => setAdmin(!isAdmin)}
+              onClick={handleToggleRole}
+              disabled={roleUpdating}
               className={`font-semibold border-2 transition-colors ${
                 isAdmin
                   ? "bg-[#ffe6f0]/80 border-[#ff8fb1] text-[#c2185b] hover:bg-[#ffd6e8]"
@@ -104,7 +133,7 @@ export default function Dashboard() {
               ) : (
                 <ShieldOff className="w-4 h-4 mr-1.5" />
               )}
-              {isAdmin ? "Admin" : "Student"}
+              {roleUpdating ? "Updating…" : isAdmin ? "Admin" : "Student"}
             </Button>
             <Button
               onClick={() => setSidebarOpen(true)}
@@ -140,22 +169,22 @@ export default function Dashboard() {
             </p>
           </motion.section>
 
-          {/* Start your study journey (Playground PVP placeholder) */}
+          {/* Entry to battlefield: choose course & week on Arena page */}
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
             <Button
-              onClick={() => {}}
+              onClick={() => router.push("/Arena")}
               className="w-full rounded-2xl border-2 border-[#ffb3c6] bg-gradient-to-r from-[#ffc5d0] to-[#ff8a8a] hover:from-[#ffd0da] hover:to-[#ff9b9b] text-white font-bold text-lg py-6 shadow-lg shadow-pink-300/40 transition-all hover:shadow-pink-300/60"
-              title="Playground PVP — coming in another branch"
+              title="Enter arena — choose course & week, then find a battle"
             >
               <Gamepad2 className="w-5 h-5 mr-2" />
               Start your study journey
             </Button>
             <p className="text-center text-xs text-[#8b5a7a] font-medium mt-2">
-              Enter playground PVP (in development)
+              Enter arena · Choose course & week, then find a PVP battle
             </p>
           </motion.section>
 

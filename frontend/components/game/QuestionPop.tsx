@@ -194,13 +194,11 @@ function AiChatSection({ messages, onSendUserMessage, isLoading = false }: AiCha
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           placeholder="Ask a follow-up or type your thoughts..."
-          disabled={isLoading}
-          className="flex-1 rounded-lg bg-white/90 border border-[#ffd6e8] px-3 py-2 text-sm text-[#4a2b3e] placeholder:text-[#b66d94] focus:outline-none focus:ring-2 focus:ring-[#ffb3c6]/60 focus:border-[#ffb3c6]/80 disabled:opacity-60 disabled:cursor-not-allowed"
+          className="flex-1 rounded-lg bg-white/90 border border-[#ffd6e8] px-3 py-2 text-sm text-[#4a2b3e] placeholder:text-[#b66d94] focus:outline-none focus:ring-2 focus:ring-[#ffb3c6]/60 focus:border-[#ffb3c6]/80"
         />
         <button
           type="submit"
-          disabled={isLoading}
-          className="px-3 py-2 rounded-lg bg-gradient-to-r from-[#ffc5d0] to-[#ff8a8a] hover:from-[#ffd0da] hover:to-[#ff9b9b] text-xs font-bold text-[#4a2b3e] border border-[#ffb3c6]/80 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="px-3 py-2 rounded-lg bg-gradient-to-r from-[#ffc5d0] to-[#ff8a8a] hover:from-[#ffd0da] hover:to-[#ff9b9b] text-xs font-bold text-[#4a2b3e] border border-[#ffb3c6]/80 transition-colors"
         >
           Send
         </button>
