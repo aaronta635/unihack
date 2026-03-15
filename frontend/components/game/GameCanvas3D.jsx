@@ -569,6 +569,7 @@ export default function GameCanvas3D({
   const [score, setScore] = useState(0);
   const [answered, setAnswered] = useState(0);
   const [nearCheckpoint, setNearCheckpoint] = useState(null);
+  const [showControlsHint, setShowControlsHint] = useState(true);
 
   const checkpointsRef = useRef(checkpoints);
   const questionOpenRef = useRef(false);
@@ -1069,11 +1070,16 @@ export default function GameCanvas3D({
       player.position.x += (playerTarget.x - player.position.x) * moveDamp;
       player.position.z += (playerTarget.z - player.position.z) * moveDamp;
 
-      // Smooth rotation toward movement direction
-      let dy = targetRotationY - player.rotation.y;
+      // Smooth rotation toward movement direction (shortest path)
+      let currentY = player.rotation.y;
+      while (currentY > Math.PI) currentY -= Math.PI * 2;
+      while (currentY < -Math.PI) currentY += Math.PI * 2;
+      let dy = targetRotationY - currentY;
       if (dy > Math.PI) dy -= Math.PI * 2;
       if (dy < -Math.PI) dy += Math.PI * 2;
-      player.rotation.y += dy * rotationDamp;
+      player.rotation.y = currentY + dy * rotationDamp;
+      while (player.rotation.y > Math.PI) player.rotation.y -= Math.PI * 2;
+      while (player.rotation.y < -Math.PI) player.rotation.y += Math.PI * 2;
 
       // Stick character to terrain (raycast at current position)
       const px = player.position.x;
@@ -1201,21 +1207,18 @@ export default function GameCanvas3D({
     <div className="fixed inset-0 top-0 left-0 w-screen h-screen min-h-screen min-w-0" style={{ minHeight: '100dvh' }}>
       <div ref={mountRef} className="absolute inset-0 top-0 left-0 w-full h-full overflow-hidden" style={{ top: 0, left: 0, right: 0, bottom: 0 }} />
       
-      {/* Controls UI — raised so not cut off at bottom */}
-      <div className="absolute bottom-6 left-4 max-w-[200px] bg-black/70 text-white px-3 py-2.5 rounded-lg text-xs">
-        <div className="font-semibold mb-1">Controls</div>
-        <div>WASD or arrows — Move</div>
-        {nearCheckpoint !== null && (
-          <div className="text-yellow-300 font-bold mt-1.5 animate-pulse">
-            SPACE — interact
-          </div>
-        )}
-      </div>
-
-      {/* Progress only (score shown in header) — top-right below header area */}
-      <div className="absolute top-14 right-4 bg-black/70 text-white px-3 py-1.5 rounded-lg text-sm font-bold">
-        {answered}/{questions.length} questions
-      </div>
+      {/* Controls UI — raised so not cut off at bottom; hides after 3s */}
+      {showControlsHint && (
+        <div className="absolute bottom-6 left-4 max-w-[200px] bg-black/70 text-white px-3 py-2.5 rounded-lg text-xs">
+          <div className="font-semibold mb-1">Controls</div>
+          <div>WASD or arrows — Move</div>
+          {nearCheckpoint !== null && (
+            <div className="text-yellow-300 font-bold mt-1.5 animate-pulse">
+              SPACE — interact
+            </div>
+          )}
+        </div>
+      )}
 
       <AnimatePresence>
         {activeQuestion && (
