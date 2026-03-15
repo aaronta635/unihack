@@ -9,6 +9,7 @@ import {
   RemoteParticipant,
   LocalParticipant,
   Track,
+  RemoteTrackPublication,
   type Participant,
 } from "livekit-client";
 import { api, type VoiceChannel } from "@/lib/api/client";
@@ -82,6 +83,24 @@ export default function VoicePage() {
           .on(RoomEvent.ActiveSpeakersChanged, () => updateParticipants(newRoom))
           .on(RoomEvent.TrackMuted, () => updateParticipants(newRoom))
           .on(RoomEvent.TrackUnmuted, () => updateParticipants(newRoom))
+          .on(
+            RoomEvent.TrackSubscribed,
+            (track, _pub, _participant) => {
+              if (track.kind === Track.Kind.Audio) {
+                const el = track.attach();
+                el.id = `audio-${track.sid}`;
+                document.body.appendChild(el);
+              }
+              updateParticipants(newRoom);
+            }
+          )
+          .on(
+            RoomEvent.TrackUnsubscribed,
+            (track) => {
+              track.detach().forEach((el) => el.remove());
+              updateParticipants(newRoom);
+            }
+          )
           .on(RoomEvent.Disconnected, () => {
             setIsConnected(false);
             setRoom(null);
@@ -108,9 +127,15 @@ export default function VoicePage() {
 
   const leaveChannel = useCallback(() => {
     if (room) {
+      room.remoteParticipants.forEach((p) => {
+        p.audioTrackPublications.forEach((pub) => {
+          if (pub.track) pub.track.detach().forEach((el) => el.remove());
+        });
+      });
       room.disconnect();
       setRoom(null);
     }
+    document.querySelectorAll("audio[id^='audio-']").forEach((el) => el.remove());
     setIsConnected(false);
     setSelectedChannel(null);
     setParticipants([]);
