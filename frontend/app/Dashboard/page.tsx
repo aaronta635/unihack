@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { LogOut, Gamepad2, Menu, Swords } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api/client";
 import { LogOut, Gamepad2, Menu, Shield, ShieldOff, GraduationCap } from "lucide-react";
@@ -13,6 +12,12 @@ import CourseSidebar from "@/components/dashboard/CourseSidebar";
 import Leaderboard from "@/components/dashboard/Leaderboard";
 import { useAdminMode } from "@/contexts/AdminModeContext";
 import StudyGoLogo from "@/components/StudyGoLogo";
+
+function getDisplayName(user: { user_metadata?: { display_name?: string; full_name?: string }; email?: string } | null): string {
+  if (!user) return "User";
+  const meta = user.user_metadata;
+  return (meta?.display_name || meta?.full_name || user.email || "User") as string;
+}
 
 const HELLO_FONTS = [
   { name: "Datatype", class: "font-datatype" },
@@ -27,12 +32,12 @@ export default function Dashboard() {
   const [useItalic, setUseItalic] = useState(false);
   const [useBold, setUseBold] = useState(true);
 
-  const [user] = useState({
-    full_name: "Demo User",
-    email: "demo@studyquest.com",
+  const { data: meData } = useQuery({
+    queryKey: ["auth", "me"],
+    queryFn: () => api.auth.me(),
   });
-
-  const displayName = user?.full_name || user?.email || "User";
+  const user = meData?.user ?? null;
+  const displayName = getDisplayName(user);
 
   // Rotate font every 0.8s with mixed italic, normal, and bold
   useEffect(() => {
@@ -83,11 +88,6 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-2">
             <Button
-              onClick={() => router.push("/GameFight")}
-              className="bg-amber-100 hover:bg-amber-200 border-2 border-amber-400 text-amber-900 font-semibold"
-            >
-              <Swords className="w-4 h-4 mr-2" />
-              Battle Demo
               variant="outline"
               size="sm"
               onClick={() => setAdmin(!isAdmin)}
@@ -139,22 +139,22 @@ export default function Dashboard() {
             </p>
           </motion.section>
 
-          {/* Start your study journey (Playground PVP placeholder) */}
+          {/* Entry to battlefield: choose course & week on Arena page */}
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
             <Button
-              onClick={() => {}}
+              onClick={() => router.push("/Arena")}
               className="w-full rounded-2xl border-2 border-[#ffb3c6] bg-gradient-to-r from-[#ffc5d0] to-[#ff8a8a] hover:from-[#ffd0da] hover:to-[#ff9b9b] text-white font-bold text-lg py-6 shadow-lg shadow-pink-300/40 transition-all hover:shadow-pink-300/60"
-              title="Playground PVP — coming in another branch"
+              title="Enter arena — choose course & week, then find a battle"
             >
               <Gamepad2 className="w-5 h-5 mr-2" />
               Start your study journey
             </Button>
             <p className="text-center text-xs text-[#8b5a7a] font-medium mt-2">
-              Enter playground PVP (in development)
+              Enter arena · Choose course & week, then find a PVP battle
             </p>
           </motion.section>
 

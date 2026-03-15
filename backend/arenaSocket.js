@@ -92,6 +92,7 @@ function attachArenaSocket(httpServer) {
   });
 
   io.on('connection', (socket) => {
+    console.log('[Arena] client connected', socket.id);
     socket.on('join_queue', async (data) => {
       const courseId = (data && data.courseId) != null ? String(data.courseId).trim() : '';
       const weekNumber = Math.max(1, parseInt(data?.weekNumber, 10) || 1);
@@ -116,6 +117,7 @@ function attachArenaSocket(httpServer) {
         const roomId = `room-${nextRoomId++}`;
         a.socket.join(roomId);
         b.socket.join(roomId);
+        console.log('[Arena] match_found', { roomId, player1: a.socket.id, player2: b.socket.id });
 
         const room = {
           player1SocketId: a.socketId,
@@ -128,6 +130,8 @@ function attachArenaSocket(httpServer) {
           questionIndex: 0,
           turnOwner: 'player1',
           phase: 'question',
+          player1Ready: false,
+          player2Ready: false,
         };
         rooms.set(roomId, room);
 
@@ -141,17 +145,31 @@ function attachArenaSocket(httpServer) {
           role: 'player2',
           opponentName: a.playerName,
         });
+        console.log('[Arena] Room created; game will start when both players press SPACE (ready_for_battle)');
+      }
+    });
 
-        try {
-          console.log('[Arena] Fetching questions for', room.courseId, 'week', room.weekNumber);
-          room.questions = await fetchQuestionsForRoom(room.courseId, room.weekNumber);
-          console.log('[Arena] Got', room.questions?.length ?? 0, 'questions, starting game');
-          startGameInRoom(io, roomId);
-        } catch (err) {
-          console.error('[Arena] Fetch questions failed', err.message || err);
-          io.to(roomId).emit('game_error', { message: 'Failed to load questions.' });
-          rooms.delete(roomId);
-        }
+    socket.on('ready_for_battle', async (data) => {
+      const roomId = data && data.roomId ? String(data.roomId).trim() : null;
+      if (!roomId) return;
+      const room = rooms.get(roomId);
+      if (!room || (room.player1SocketId !== socket.id && room.player2SocketId !== socket.id)) return;
+      const role = getRole(room, socket.id);
+      if (!role) return;
+      if (role === 'player1') room.player1Ready = true;
+      else room.player2Ready = true;
+      if (!room.player1Ready || !room.player2Ready) {
+        socket.emit('waiting_for_opponent', { roomId });
+        return;
+      }
+      try {
+        room.questions = await fetchQuestionsForRoom(room.courseId, room.weekNumber);
+        startGameInRoom(io, roomId);
+        io.to(roomId).emit('both_ready', { roomId });
+      } catch (err) {
+        console.error('[Arena] Fetch questions failed', err.message || err);
+        io.to(roomId).emit('game_error', { message: 'Failed to load questions.' });
+        rooms.delete(roomId);
       }
     });
 
@@ -216,6 +234,20 @@ function attachArenaSocket(httpServer) {
       }
 
       nextTurn(io, roomId);
+    });
+
+    // 3D arena: broadcast position to the other player in the room so both see each other move
+    socket.on('position_update', (data) => {
+      const roomId = data && data.roomId ? String(data.roomId).trim() : null;
+      if (!roomId) return;
+      const room = rooms.get(roomId);
+      if (!room || (room.player1SocketId !== socket.id && room.player2SocketId !== socket.id)) return;
+      socket.to(roomId).emit('position_update', {
+        role: data.role,
+        x: data.x,
+        z: data.z,
+        rotationY: data.rotationY,
+      });
     });
 
     socket.on('disconnect', () => {
