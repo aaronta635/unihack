@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { LogOut, Gamepad2, Menu, Swords } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api/client";
 import { LogOut, Gamepad2, Menu, Shield, ShieldOff, GraduationCap } from "lucide-react";
@@ -82,6 +83,11 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-2">
             <Button
+              onClick={() => router.push("/GameFight")}
+              className="bg-amber-100 hover:bg-amber-200 border-2 border-amber-400 text-amber-900 font-semibold"
+            >
+              <Swords className="w-4 h-4 mr-2" />
+              Battle Demo
               variant="outline"
               size="sm"
               onClick={() => setAdmin(!isAdmin)}

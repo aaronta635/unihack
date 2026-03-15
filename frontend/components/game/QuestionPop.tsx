@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, X, Bot, User as UserIcon, ArrowLeft } from "lucide-react";
+import { Sparkles, Bot, User as UserIcon, ArrowLeft } from "lucide-react";
 import type { McqQuestion } from "@/lib/types/entities";
 import { useTutorSettings } from "@/contexts/TutorSettingsContext";
 import { getPersonalityFallbackMessages } from "@/lib/tutorPersonalities";
@@ -90,33 +90,6 @@ function McqSection({
           </motion.button>
         ))}
       </div>
-      {isAnswerRevealed && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-3"
-        >
-          <div
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm ${
-              selectedOptionIndex === question.correct_index
-                ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/40"
-                : "bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-lg shadow-red-500/40"
-            }`}
-          >
-            {selectedOptionIndex === question.correct_index ? (
-              <>
-                <Sparkles className="w-4 h-4" />
-                +10 Points
-              </>
-            ) : (
-              <>
-                <X className="w-4 h-4" />
-                Wrong
-              </>
-            )}
-          </div>
-        </motion.div>
-      )}
     </div>
   );
 }

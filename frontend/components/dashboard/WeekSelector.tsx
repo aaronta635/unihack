@@ -41,42 +41,38 @@ export default function WeekSelector({
       return;
     }
 
-    let cancelled = false;
+    const ac = new AbortController();
     const base =
       process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
 
     const load = async () => {
-      try {
-        const results = await Promise.all(
-          WEEK_NUMBERS.map(async (num) => {
+      const results = await Promise.all(
+        WEEK_NUMBERS.map(async (num) => {
+          try {
             const res = await fetch(
               `${base}/api/questions?course_id=${encodeURIComponent(
                 course.id
-              )}&week_number=${num}`
+              )}&week_number=${num}`,
+              { signal: ac.signal }
             );
             if (!res.ok) return [num, false] as const;
             const json = await res.json().catch(() => ({ questions: [] }));
             const hasQ =
               Array.isArray(json.questions) && json.questions.length > 0;
             return [num, hasQ] as const;
-          })
-        );
-        if (!cancelled) {
-          setWeekHasQuestions(Object.fromEntries(results));
-        }
-      } catch (err) {
-        console.error("Failed to load week question availability", err);
-        if (!cancelled) {
-          setWeekHasQuestions({});
-        }
+          } catch {
+            return [num, false] as const;
+          }
+        })
+      );
+      if (!ac.signal.aborted) {
+        setWeekHasQuestions(Object.fromEntries(results));
       }
     };
 
     load();
 
-    return () => {
-      cancelled = true;
-    };
+    return () => ac.abort();
   }, [course?.id]);
 
   const handleUpload = async (weekNum: number) => {

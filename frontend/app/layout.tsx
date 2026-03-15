@@ -24,6 +24,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
+    <html lang="en" className="light" style={{ colorScheme: "light" }}>
     <html lang="en">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
