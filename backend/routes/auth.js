@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const supabase = require('../supabase');
+const { getSupabaseAdmin } = require('../supabaseClient');
 
 /**
  * @swagger
@@ -141,6 +142,44 @@ router.get('/me', async (req, res) => {
     return res.status(401).json({ error: error?.message || 'Invalid token' });
   }
   res.json({ user });
+});
+
+/**
+ * PATCH /auth/me/role
+ * Authorization: Bearer <access_token>
+ * Body: { role: 'admin' | 'student' }
+ * Updates the current user's role in user_metadata so the Admin/Student toggle persists.
+ */
+router.patch('/me/role', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Missing or invalid authorization' });
+  }
+  const token = authHeader.slice(7);
+  const { data: { user }, error: getUserError } = await supabase.auth.getUser(token);
+  if (getUserError || !user) {
+    return res.status(401).json({ error: getUserError?.message || 'Invalid token' });
+  }
+
+  const role = req.body?.role;
+  if (role !== 'admin' && role !== 'student') {
+    return res.status(400).json({ error: 'role must be "admin" or "student"' });
+  }
+
+  try {
+    const admin = getSupabaseAdmin();
+    const existingMeta = user.user_metadata && typeof user.user_metadata === 'object' ? { ...user.user_metadata } : {};
+    const { data: updated, error: updateError } = await admin.auth.admin.updateUserById(
+      user.id,
+      { user_metadata: { ...existingMeta, role } }
+    );
+    if (updateError) {
+      return res.status(500).json({ error: updateError.message });
+    }
+    return res.json({ user: updated?.user ?? user, role });
+  } catch (err) {
+    return res.status(500).json({ error: err.message || 'Failed to update role' });
+  }
 });
 
 module.exports = router;

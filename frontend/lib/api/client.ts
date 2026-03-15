@@ -22,6 +22,14 @@ export function getApiBase(): string {
   return "http://localhost:3000";
 }
 
+/** Returns headers with Bearer token when available (for authenticated API calls, e.g. admin upload). */
+export function getAuthHeaders(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  const token = getAuthStorage()?.getItem(AUTH_TOKEN_KEY) ?? null;
+  if (!token) return {};
+  return { Authorization: `Bearer ${token}` };
+}
+
 const API_BASE = getApiBase();
 
 const AUTH_TOKEN_KEY = "access_token";
@@ -103,6 +111,23 @@ const auth = {
       return { user: data.user ?? data };
     } catch (err) {
       return { user: null, error: err instanceof Error ? err.message : "Signup failed" };
+    }
+  },
+  /** Persist Admin/Student role for the current user. Call after toggle click. */
+  async updateRole(role: "admin" | "student"): Promise<{ user?: unknown; role?: string; error?: string }> {
+    const token = getStoredToken();
+    if (!token) return { error: "Not logged in" };
+    try {
+      const res = await fetch(`${API_BASE}/auth/me/role`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ role }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return { error: (data as { error?: string }).error ?? "Failed to update role" };
+      return { user: (data as { user?: unknown }).user, role: (data as { role?: string }).role };
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : "Failed to update role" };
     }
   },
   logout(redirectUrl?: string) {

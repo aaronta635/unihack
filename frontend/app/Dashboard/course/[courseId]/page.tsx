@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import AnimeBackground from "@/components/game/Background";
 import Leaderboard from "@/components/dashboard/Leaderboard";
 import WeekSelector from "@/components/dashboard/WeekSelector";
-import { useAdminMode } from "@/contexts/AdminModeContext";
 
 type Course = {
   id: string;
@@ -30,8 +29,15 @@ type Score = {
 export default function CoursePage() {
   const router = useRouter();
   const params = useParams();
-  const { isAdmin } = useAdminMode();
   const courseId = params.courseId as string;
+
+  const { data: meData } = useQuery({
+    queryKey: ["auth", "me"],
+    queryFn: () => api.auth.me(),
+  });
+  const user = meData?.user as { app_metadata?: { role?: string }; user_metadata?: { role?: string } } | null | undefined;
+  const isAdmin =
+    user?.app_metadata?.role === "admin" || user?.user_metadata?.role === "admin";
 
   const {
     data: courseList = [],
@@ -154,7 +160,7 @@ export default function CoursePage() {
               <WeekSelector
                 course={courseData}
                 onStartGame={handleStartGame}
-                canUploadPdf={isAdmin}
+                canUploadPdf={!!isAdmin}
               />
             </motion.section>
           </div>
