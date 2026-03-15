@@ -129,7 +129,7 @@ export default function WeekSelector({
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#ffc5d0] to-[#ff8a8a] flex items-center justify-center">
           <Calendar className="w-4 h-4 text-white" />
         </div>
-        <h2 className="text-lg font-bold text-[#4a2b3e]">
+        <h2 className="text-lg font-bold text-black">
           {course?.code} — Weeks
         </h2>
       </div>
@@ -160,7 +160,7 @@ export default function WeekSelector({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${hasQuestions ? "bg-[#ff8fb1]/80 text-white" : "bg-[#ffe6f0] text-[#4a2b3e]"}`}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${hasQuestions ? "bg-[#ff8fb1]/80 text-white" : "bg-[#ffe6f0] text-black"}`}
                       >
                         {num}
                       </div>

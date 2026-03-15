@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api/client";
-import { LogOut, Gamepad2, Menu, Shield, ShieldOff, GraduationCap } from "lucide-react";
+import { LogOut, Gamepad2, Menu, Shield, ShieldOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AnimeBackground from "@/components/game/Background";
 import CourseSidebar from "@/components/dashboard/CourseSidebar";
@@ -54,41 +54,25 @@ export default function Dashboard() {
       <div className="relative z-10">
         <div className="flex items-center justify-between p-4 md:px-8">
           <div className="flex items-center gap-3">
-            {isAdmin ? (
-              <>
-                <div className="flex items-center gap-3 rounded-xl flex-shrink-0 shadow-md border-2 border-[#2a7a76]/80 bg-[#1E615D] pl-2 pr-4 py-2 min-w-[140px]" title="studygo — Admin">
-                  <StudyGoLogo className="w-12 h-12 flex-shrink-0" />
-                  <span className="text-white font-bold text-lg tracking-tight lowercase whitespace-nowrap">studygo</span>
-                </div>
-                <div>
-                  <p className="text-xs text-[#2a7a76] font-semibold">
-                    Admin · {displayName}
-                  </p>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#ffc5d0] to-[#ff8a8a] flex items-center justify-center shadow-md ring-2 ring-[#ffd6e8]/80" title="StudyQuest">
-                  <GraduationCap className="w-5 h-5 text-white" strokeWidth={2.2} />
-                </div>
-                <div>
-                  <h1 className="text-lg font-black text-[#4a2b3e]">StudyQuest</h1>
-                  <p className="text-xs text-[#8b5a7a] font-semibold">
-                    {user ? `Welcome, ${displayName}` : "Dashboard"}
-                  </p>
-                </div>
-              </>
-            )}
+            <div className="flex items-center gap-3 rounded-xl flex-shrink-0 shadow-md border-2 border-[#2a7a76]/80 bg-[#1E615D] pl-2 pr-4 py-2 min-w-[140px]" title="studygo">
+              <StudyGoLogo className="w-12 h-12 flex-shrink-0" />
+              <span className="text-white font-bold text-lg tracking-tight lowercase whitespace-nowrap">studygo</span>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-black">
+                {isAdmin ? `Admin · ${displayName}` : displayName}
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setAdmin(!isAdmin)}
-              className={`font-semibold border-2 transition-colors ${
+              className={`font-semibold border-2 transition-colors text-black ${
                 isAdmin
-                  ? "bg-[#ffe6f0]/80 border-[#ff8fb1] text-[#c2185b] hover:bg-[#ffd6e8]"
-                  : "bg-white/70 border-[#ffd6e8] text-[#4a2b3e] hover:bg-[#ffe6f0]/60 hover:border-[#ffb3c6]"
+                  ? "bg-[#ffe6f0]/80 border-[#ff8fb1] hover:bg-[#ffd6e8]"
+                  : "bg-white/70 border-[#ffd6e8] hover:bg-[#ffe6f0]/60 hover:border-[#ffb3c6]"
               }`}
               title={isAdmin ? "Admin mode (click to switch to student)" : "Student mode (click to switch to admin)"}
             >
@@ -101,7 +85,7 @@ export default function Dashboard() {
             </Button>
             <Button
               onClick={() => setSidebarOpen(true)}
-              className="bg-[#ffe6f0]/90 hover:bg-[#ffd6e8] border-2 border-[#ffb3c6] text-[#4a2b3e] font-semibold"
+              className="bg-[#ffe6f0]/90 hover:bg-[#ffd6e8] border-2 border-[#ffb3c6] text-black font-semibold"
             >
               <Menu className="w-4 h-4 mr-2" />
               Choose course
@@ -110,7 +94,7 @@ export default function Dashboard() {
               variant="ghost"
               size="sm"
               onClick={() => router.push("/")}
-              className="text-[#4a2b3e] hover:text-[#2b1020] hover:bg-[#ffe6f0]/60 font-semibold border-2 border-[#ffb3c6] bg-white/60 backdrop-blur-sm"
+              className="text-black hover:text-black/80 hover:bg-[#ffe6f0]/60 font-semibold border-2 border-[#ffb3c6] bg-white/60 backdrop-blur-sm"
             >
               <LogOut className="w-4 h-4 mr-1" /> Logout
             </Button>
@@ -126,7 +110,7 @@ export default function Dashboard() {
             className="rounded-2xl border-2 border-[#ffd6e8] bg-gradient-to-r from-[#ffe6f0]/90 via-[#fff7fb]/90 to-[#ffe6de]/90 backdrop-blur-xl p-8 shadow-lg shadow-pink-200/40"
           >
             <p
-              className={`text-4xl md:text-5xl text-[#4a2b3e] text-center transition-all duration-300 ${HELLO_FONTS[fontIndex].class} ${useBold ? "font-black" : "font-semibold"}`}
+              className={`text-4xl md:text-5xl text-black text-center transition-all duration-300 ${HELLO_FONTS[fontIndex].class} ${useBold ? "font-black" : "font-semibold"}`}
               style={{ fontStyle: useItalic ? "italic" : "normal" }}
             >
               Hello, {displayName}
@@ -147,7 +131,7 @@ export default function Dashboard() {
               <Gamepad2 className="w-5 h-5 mr-2" />
               Start your study journey
             </Button>
-            <p className="text-center text-xs text-[#8b5a7a] font-medium mt-2">
+            <p className="text-center text-xs text-black font-medium mt-2">
               Enter playground PVP (in development)
             </p>
           </motion.section>
