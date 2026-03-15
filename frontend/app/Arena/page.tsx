@@ -91,9 +91,10 @@ export default function ArenaPage() {
               >
                 <ArrowLeft className="w-4 h-4 mr-1" /> Back
               </Button>
-              <h1 className="text-lg font-black text-[#4a2b3e]">Arena</h1>
-              <div className="w-20" />
             </div>
+
+            <h1 className="text-6xl font-black text-[#4a2b3e] tracking-tight text-center pt-6 pb-6">Arena</h1>
+            
             <div className="flex-1 flex flex-col items-center justify-center p-6 max-w-md mx-auto w-full">
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
