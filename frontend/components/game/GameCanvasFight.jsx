@@ -9,6 +9,7 @@ import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { X, Search } from "lucide-react";
 import { getArenaSocket } from "@/lib/arenaSocket";
+import { apiUrl } from "@/lib/api/client";
 
 /** Default ground: one large plane extending in all directions; arena sits on it. */
 const GROUND_SIZE = 6000;
@@ -679,8 +680,7 @@ export default function GameCanvasFight({
 
   useEffect(() => {
     if (courseId && weekNumber) {
-      const base = process.env.NEXT_PUBLIC_API_URL ?? (typeof window !== "undefined" ? "" : "http://localhost:3000");
-      const url = `${base}/api/questions?course_id=${encodeURIComponent(courseId)}&week_number=${weekNumber}`;
+      const url = apiUrl(`api/questions?course_id=${encodeURIComponent(courseId)}&week_number=${weekNumber}`);
       fetch(url)
         .then((res) => (res.ok ? res.json() : { questions: [] }))
         .then((json) => {

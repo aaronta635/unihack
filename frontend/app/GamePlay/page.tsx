@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { api } from "@/lib/api/client";
+import { api, apiUrl } from "@/lib/api/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -69,12 +69,10 @@ export default function GamePlay() {
     queryKey: ["questions", courseId, weekNumber],
     queryFn: async (): Promise<McqQuestion[]> => {
       if (!courseId || !weekNumber || weekNumber <= 0) return [];
-      const base =
-        process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
       const res = await fetch(
-        `${base}/api/questions?course_id=${encodeURIComponent(
+        apiUrl(`api/questions?course_id=${encodeURIComponent(
           courseId
-        )}&week_number=${weekNumber}`
+        )}&week_number=${weekNumber}`)
       );
       if (!res.ok) {
         console.error("Failed to load questions from API", res.status);

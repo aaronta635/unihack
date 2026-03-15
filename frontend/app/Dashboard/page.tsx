@@ -96,9 +96,8 @@ export default function Dashboard() {
       <div className="relative z-10">
         <div className="flex items-center justify-between p-4 md:px-8">
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-3 rounded-xl flex-shrink-0 shadow-md border-2 border-[#2a7a76]/80 bg-[#1E615D] pl-2 pr-4 py-2 min-w-[140px]" title="studygo">
+            <div className="flex items-center justify-center rounded-xl flex-shrink-0 shadow-md border-2 border-[#2a7a76]/80 bg-[#1E615D] p-2" title="studygo">
               <StudyGoLogo className="w-12 h-12 flex-shrink-0" />
-              <span className="text-white font-bold text-lg tracking-tight lowercase whitespace-nowrap">studygo</span>
             </div>
             <div>
               <p className="text-sm font-semibold text-black">
