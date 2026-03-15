@@ -16,7 +16,7 @@ export function getArenaSocket(): Socket {
   if (typeof window === "undefined") {
     throw new Error("getArenaSocket() must be called on the client");
   }
-  if (socket?.connected) return socket;
+  if (socket) return socket;
   const base = getApiBase();
   socket = io(base, {
     path: "/arena-socket",

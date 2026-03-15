@@ -623,12 +623,15 @@ export default function GameCanvasFight({
   playerName: playerNameProp,
   /** Display name for the opponent (from Arena match_found). */
   opponentName: opponentNameProp,
+  /** Called when opponent leaves the arena (in 3D or after closing 2D); parent can redirect to /Arena. */
+  onOpponentLeftArena,
 }) {
   const mountRef = useRef(null);
   const [nearLantern, setNearLantern] = useState(false);
   const [showBattleView, setShowBattleView] = useState(false);
   const [waitingForOpponent, setWaitingForOpponent] = useState(false);
   const [showControlsHint, setShowControlsHint] = useState(true);
+  const [opponentLeftMessage, setOpponentLeftMessage] = useState(null);
 
   const socketRef = useRef(null);
   const remotePositionRef = useRef({ x: 0, z: 50, rotationY: 0 });
@@ -779,9 +782,21 @@ export default function GameCanvasFight({
       setTimeout(() => setShowBattleView(false), 2000);
     };
     const onOpponentLeft = () => {
-      setBattlePhase("won");
-      setBattleMessage("Opponent left. You win!");
-      setTimeout(() => setShowBattleView(false), 2000);
+      if (battleOpenRef.current) {
+        setBattlePhase("won");
+        setBattleMessage("Opponent left. You win!");
+        setTimeout(() => {
+          setShowBattleView(false);
+          if (typeof onOpponentLeftArena === "function") {
+            setTimeout(onOpponentLeftArena, 500);
+          }
+        }, 2000);
+      } else {
+        setOpponentLeftMessage("Opponent left the arena. Returning to Arena…");
+        setTimeout(() => {
+          if (typeof onOpponentLeftArena === "function") onOpponentLeftArena();
+        }, 2000);
+      }
     };
     const onGameError = (data) => {
       setBattleMessage(data.message ?? "Something went wrong.");
@@ -817,7 +832,7 @@ export default function GameCanvasFight({
       arenaSocket.off("connect_error", onConnectError);
       sendPositionRef.current = () => {};
     };
-  }, [roomId, role, playerName, opponentName]);
+  }, [roomId, role]);
 
   // Raw WebSocket 2-player sync (when no roomId): connect to wsUrl; send our position (role + x, z, rotationY)
   useEffect(() => {
@@ -1427,6 +1442,16 @@ export default function GameCanvasFight({
           <div className="bg-slate-900/95 backdrop-blur border-2 border-amber-500/50 rounded-2xl px-8 py-6 shadow-xl text-center max-w-sm">
             <p className="text-amber-200 font-bold text-lg mb-2">Waiting for opponent</p>
             <p className="text-slate-300 text-sm">The other player must press SPACE near the lantern to enter the 2D battle.</p>
+            <div className="mt-4 flex justify-center">
+              <span className="inline-block w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" aria-hidden />
+            </div>
+          </div>
+        </div>
+      )}
+      {opponentLeftMessage && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 pointer-events-none">
+          <div className="bg-slate-900/95 backdrop-blur border-2 border-amber-500/50 rounded-2xl px-8 py-6 shadow-xl text-center max-w-sm">
+            <p className="text-amber-200 font-bold text-lg">{opponentLeftMessage}</p>
             <div className="mt-4 flex justify-center">
               <span className="inline-block w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" aria-hidden />
             </div>

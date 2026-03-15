@@ -229,7 +229,7 @@ function attachArenaSocket(httpServer) {
           health1: room.health1,
           health2: room.health2,
         });
-        rooms.delete(roomId);
+        // Keep room so both players can continue 3D position sync after returning from 2D battle; room is removed on disconnect
         return;
       }
 
