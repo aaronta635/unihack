@@ -122,17 +122,17 @@ function AiChatSection({ messages, onSendUserMessage, isLoading = false }: AiCha
   };
 
   return (
-    <div className="relative z-10 flex flex-col h-full min-w-0 rounded-2xl border-2 border-slate-600/50 bg-slate-900/70 overflow-hidden">
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-600/50 bg-slate-800/60 shrink-0">
-        <Bot className="w-5 h-5 text-cyan-400" />
-        <span className="text-sm font-bold text-slate-200">AI Study Buddy</span>
+    <div className="relative z-10 flex flex-col h-full min-w-0 rounded-2xl border-2 border-[#ffb3c6]/70 bg-white/75 overflow-hidden">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-[#ffd6e8] bg-[#ffe6f0]/80 shrink-0">
+        <Bot className="w-5 h-5 text-[#c2185b]" />
+        <span className="text-sm font-bold text-[#4a2b3e]">AI Study Buddy</span>
       </div>
       <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0"
       >
         {messages.length === 0 ? (
-          <p className="text-slate-500 text-sm font-medium italic py-4">
+          <p className="text-[#8b5a7a] text-sm font-medium italic py-4">
             Chat with your AI tutor here. Answer the question to see explanations.
           </p>
         ) : (
@@ -147,8 +147,8 @@ function AiChatSection({ messages, onSendUserMessage, isLoading = false }: AiCha
               <div
                 className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${
                   msg.sender === "ai"
-                    ? "bg-gradient-to-br from-cyan-500 to-blue-600"
-                    : "bg-gradient-to-br from-pink-500 to-purple-600"
+                    ? "bg-gradient-to-br from-[#ffc5d0] to-[#ff8a8a]"
+                    : "bg-gradient-to-br from-[#ffe6f0] to-[#ffd6e8]"
                 }`}
               >
                 {msg.sender === "ai" ? (
@@ -160,8 +160,8 @@ function AiChatSection({ messages, onSendUserMessage, isLoading = false }: AiCha
               <div
                 className={`flex-1 min-w-0 rounded-2xl px-4 py-3 text-sm font-medium leading-relaxed ${
                   msg.sender === "ai"
-                    ? "bg-slate-700/80 text-slate-100 border border-slate-600/50 text-left"
-                    : "bg-cyan-900/50 text-cyan-100 border border-cyan-500/40 text-right"
+                    ? "bg-[#ffe6f0] text-[#4a2b3e] border border-[#ffd6e8] text-left"
+                    : "bg-[#ffd6e8] text-[#4a2b3e] border border-[#ffb3c6] text-right"
                 }`}
               >
                 {msg.text}
@@ -187,13 +187,20 @@ function AiChatSection({ messages, onSendUserMessage, isLoading = false }: AiCha
       </div>
       <form
         onSubmit={handleSubmit}
-        className="flex items-center gap-2 px-3 py-2 border-t border-slate-700/60 bg-slate-900/80 shrink-0"
+        className="flex items-center gap-2 px-3 py-2 border-t border-[#ffd6e8] bg-[#ffe6f0]/80 shrink-0"
       >
         <input
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           placeholder="Ask a follow-up or type your thoughts..."
+<<<<<<< HEAD
+          className="flex-1 rounded-lg bg-white/90 border border-[#ffd6e8] px-3 py-2 text-sm text-[#4a2b3e] placeholder:text-[#b66d94] focus:outline-none focus:ring-2 focus:ring-[#ffb3c6]/60 focus:border-[#ffb3c6]/80"
+        />
+        <button
+          type="submit"
+          className="px-3 py-2 rounded-lg bg-gradient-to-r from-[#ffc5d0] to-[#ff8a8a] hover:from-[#ffd0da] hover:to-[#ff9b9b] text-xs font-bold text-[#4a2b3e] border border-[#ffb3c6]/80 transition-colors"
+=======
           disabled={isLoading}
           className="flex-1 rounded-lg bg-slate-800/80 border border-slate-600/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/60 focus:border-cyan-500/80 disabled:opacity-60 disabled:cursor-not-allowed"
         />
@@ -201,6 +208,7 @@ function AiChatSection({ messages, onSendUserMessage, isLoading = false }: AiCha
           type="submit"
           disabled={isLoading}
           className="px-3 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-xs font-bold text-slate-900 border border-cyan-300/80 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+>>>>>>> dbedd9924679816a85c8ceb6b0482738ec60a295
         >
           Send
         </button>
