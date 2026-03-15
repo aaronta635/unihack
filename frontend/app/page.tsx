@@ -105,9 +105,8 @@ export default function Home() {
                 }}
                 className="inline-block mb-6"
               >
-                <div className="flex items-center gap-3 rounded-3xl shadow-2xl border-2 border-[#2a7a76]/80 bg-[#1E615D] pl-4 pr-6 py-4 mx-auto">
+                <div className="flex items-center justify-center rounded-3xl shadow-2xl border-2 border-[#2a7a76]/80 bg-[#1E615D] p-4 mx-auto">
                   <StudyGoLogo className="w-16 h-16 flex-shrink-0" />
-                  <span className="text-white font-bold text-2xl tracking-tight lowercase">studygo</span>
                 </div>
               </motion.div>
               <h1 className="text-5xl md:text-6xl font-black text-black mb-3 drop-shadow-lg">
@@ -170,9 +169,8 @@ export default function Home() {
             >
               <div className="bg-gradient-to-br from-[#ffe6f0]/95 via-[#ffd6e8]/95 to-[#ffe6de]/95 backdrop-blur-2xl rounded-3xl p-8 shadow-2xl shadow-pink-300/60 border border-[#ffb3c6]/80">
               <div className="text-center mb-6">
-                <div className="inline-flex items-center gap-2 rounded-2xl border-2 border-[#2a7a76]/80 bg-[#1E615D] pl-3 pr-4 py-2.5 mb-4">
+                <div className="inline-flex items-center justify-center rounded-2xl border-2 border-[#2a7a76]/80 bg-[#1E615D] p-2.5 mb-4">
                   <StudyGoLogo className="w-10 h-10 flex-shrink-0" />
-                  <span className="text-white font-bold text-lg tracking-tight lowercase">studygo</span>
                 </div>
                 <h2 className="text-2xl font-black text-black mb-1">
                   {mode === "login" ? "Welcome Back!" : "Join studygo"}
