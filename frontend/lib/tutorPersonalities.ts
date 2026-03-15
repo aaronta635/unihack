@@ -39,7 +39,7 @@ export function getPersonalityFallbackMessages(key: string): {
     welcome: "Hey, let's start",
     correct: "Yes! That's the one. +10 points, you're on a roll!",
     wrong: (correctLetter: string, correctText: string) =>
-      `Oops, not this time. It's ${correctLetter}: ${correctText}. No worries — next one!`,
+      `Oops, not this time. It's ${correctLetter}: ${correctText}. No worries,next one!`,
   };
   const map: Record<string, typeof bestFriend> = {
     "best-friend": bestFriend,

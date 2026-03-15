@@ -376,4 +376,30 @@ const tutor = {
   },
 };
 
-export const api = { auth, entities, integrations, tutor, stats };
+export type VoiceChannel = { id: string; name: string; description: string };
+
+const voice = {
+  async getChannels(): Promise<VoiceChannel[]> {
+    const headers = getAuthHeaders();
+    const res = await fetch(`${API_BASE}/api/voice/channels`, { headers });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.channels ?? [];
+  },
+
+  async getToken(channelId: string): Promise<{ token: string; url: string }> {
+    const headers = { "Content-Type": "application/json", ...getAuthHeaders() };
+    const res = await fetch(`${API_BASE}/api/voice/token`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ channelId }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || "Failed to get voice token");
+    }
+    return res.json();
+  },
+};
+
+export const api = { auth, entities, integrations, tutor, stats, voice };

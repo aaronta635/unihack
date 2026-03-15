@@ -12,6 +12,8 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const uploadRouter = require('./routes/upload');
 const tutorRouter = require('./routes/tutor');
+const voiceRouter = require('./routes/voice');
+const { requireAuth } = require('./middleware/requireAuth');
 
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
@@ -50,6 +52,7 @@ app.use('/users', usersRouter);
 app.use('/auth', authRouter);
 app.use('/upload', uploadRouter);
 app.use('/api', scoresRouter);
+app.use('/api/voice', voiceRouter);
 app.use('/', indexRouter);
 
 const swaggerSpec = swaggerJSDoc({
