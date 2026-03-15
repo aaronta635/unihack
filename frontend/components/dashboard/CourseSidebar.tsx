@@ -67,7 +67,7 @@ export default function CourseSidebar({
       >
         <div className="relative flex-1 flex flex-col min-h-0">
           <div className="p-4 border-b border-[#ffd6e8] flex items-center justify-between bg-[#ffe6f0]/50">
-            <h2 className="text-lg font-bold text-[#4a2b3e]">
+            <h2 className="text-lg font-bold text-black">
               {!selectedSchool
                 ? "Select university"
                 : "Select course"}
@@ -76,7 +76,7 @@ export default function CourseSidebar({
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="rounded-full text-[#4a2b3e] hover:bg-[#ffd6e8]/80 hover:text-[#2b1020]"
+              className="rounded-full text-black hover:bg-[#ffd6e8]/80"
             >
               <X className="w-5 h-5" />
             </Button>
@@ -95,7 +95,7 @@ export default function CourseSidebar({
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#ffc5d0] to-[#ff8a8a] flex items-center justify-center">
                       <GraduationCap className="w-4 h-4 text-white" />
                     </div>
-                    <span className="text-sm font-semibold text-[#8b5a7a]">
+                    <span className="text-sm font-semibold text-black">
                       Choose your university
                     </span>
                   </div>
@@ -120,7 +120,7 @@ export default function CourseSidebar({
                       setSelectedSchool(null);
                       setSelectedCourse(null);
                     }}
-                    className="mb-2 text-[#8b5a7a] hover:text-[#4a2b3e] hover:bg-[#ffd6e8]/60"
+                    className="mb-2 text-black hover:bg-[#ffd6e8]/60"
                   >
                     ← Back to universities
                   </Button>
@@ -128,7 +128,7 @@ export default function CourseSidebar({
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#ffc5d0] to-[#ff8a8a] flex items-center justify-center">
                       <BookOpen className="w-4 h-4 text-white" />
                     </div>
-                    <span className="text-sm font-semibold text-[#4a2b3e]">
+                    <span className="text-sm font-semibold text-black">
                       {selectedSchool.name}
                     </span>
                   </div>

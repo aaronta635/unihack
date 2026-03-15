@@ -90,7 +90,7 @@ export default function CoursePage() {
     return (
       <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
         <AnimeBackground />
-        <div className="relative z-10 text-[#4a2b3e] font-semibold">
+        <div className="relative z-10 text-black font-semibold">
           Loading...
         </div>
       </div>
@@ -101,12 +101,12 @@ export default function CoursePage() {
     return (
       <div className="min-h-screen relative overflow-hidden flex flex-col items-center justify-center gap-4">
         <AnimeBackground />
-        <div className="relative z-10 text-[#4a2b3e] font-semibold">
+        <div className="relative z-10 text-black font-semibold">
           Course not found
         </div>
         <Button
           onClick={() => router.push("/Dashboard")}
-          className="relative z-10 bg-[#ffe6f0] border-[#ffb3c6] text-[#4a2b3e] hover:bg-[#ffd6e8]"
+          className="relative z-10 bg-[#ffe6f0] border-[#ffb3c6] text-black hover:bg-[#ffd6e8]"
         >
           <ArrowLeft className="w-4 h-4 mr-2" /> Back to Dashboard
         </Button>
@@ -125,7 +125,7 @@ export default function CoursePage() {
             variant="ghost"
             size="sm"
             onClick={() => router.push("/Dashboard")}
-            className="text-[#4a2b3e] hover:text-[#2b1020] hover:bg-[#ffe6f0]/60 font-semibold border-2 border-[#ffb3c6] bg-white/60"
+            className="text-black hover:bg-[#ffe6f0]/60 font-semibold border-2 border-[#ffb3c6] bg-white/60"
           >
             <ArrowLeft className="w-4 h-4 mr-1" /> Back to Dashboard
           </Button>
@@ -134,8 +134,8 @@ export default function CoursePage() {
               <Gamepad2 className="w-5 h-5 text-white" />
             </div>
             <div className="text-right">
-              <h1 className="text-lg font-black text-[#4a2b3e]">{courseData.code}</h1>
-              <p className="text-xs text-[#8b5a7a] font-semibold truncate max-w-[180px]">
+              <h1 className="text-lg font-black text-black">{courseData.code}</h1>
+              <p className="text-xs text-gray-600 font-semibold truncate max-w-[180px]">
                 {courseData.title}
               </p>
             </div>
