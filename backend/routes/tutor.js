@@ -109,7 +109,7 @@ router.post("/speech", express.json(), async (req, res) => {
     if (model.includes("gpt-4o-mini-tts")) {
       const instructions =
         (personality && personality.ttsInstructions) ||
-        "Speak naturally with clear, friendly intonation.";
+        "Speak naturally with clear, friendly intonation,happy and energetic.";
       payload.instructions = String(instructions).slice(0, 4096);
     }
     const response = await openai.audio.speech.create(payload);
