@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api/client";
-import { LogOut, Gamepad2, Menu, Swords, Shield, ShieldOff, GraduationCap } from "lucide-react";
+import { LogOut, Gamepad2, Menu, Swords, Shield, ShieldOff, GraduationCap, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AnimeBackground from "@/components/game/Background";
 import CourseSidebar from "@/components/dashboard/CourseSidebar";
@@ -206,6 +206,25 @@ export default function Dashboard() {
             </Button>
             <p className="text-center text-xs text-[#8b5a7a] font-medium mt-2">
               Enter arena · Choose course & week, then find a PVP battle
+            </p>
+          </motion.section>
+
+          {/* Voice Channels */}
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+          >
+            <Button
+              onClick={() => router.push("/Voice")}
+              className="w-full rounded-2xl border-2 border-[#c6b3ff] bg-gradient-to-r from-[#d5c5ff] to-[#b08aff] hover:from-[#ddd0ff] hover:to-[#be9bff] text-white font-bold text-lg py-6 shadow-lg shadow-purple-300/40 transition-all hover:shadow-purple-300/60"
+              title="Join a voice channel — talk with other students"
+            >
+              <Mic className="w-5 h-5 mr-2" />
+              Voice Channels
+            </Button>
+            <p className="text-center text-xs text-[#8b5a7a] font-medium mt-2">
+              Join a voice channel · Talk with other students in real time
             </p>
           </motion.section>
 
