@@ -16,10 +16,10 @@ const USE_MOCK_ENTITIES = true;
 
 export function getApiBase(): string {
   const env = process.env.NEXT_PUBLIC_API_URL?.trim();
-  if (env) return env;
-  if (typeof window !== "undefined")
-    return `${window.location.protocol}//${window.location.hostname}:3000`;
-  return "http://localhost:3000";
+  const base = env || (typeof window !== "undefined"
+    ? `${window.location.protocol}//${window.location.hostname}:3000`
+    : "http://localhost:3000");
+  return base.replace(/\/+$/, "");
 }
 
 /** Returns headers with Bearer token when available (for authenticated API calls, e.g. admin upload). */
