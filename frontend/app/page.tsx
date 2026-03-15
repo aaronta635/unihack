@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Gamepad2,
   Sparkles,
   GraduationCap,
   Zap,
@@ -17,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import AnimeBackground from "@/components/game/Background";
+import StudyGoLogo from "@/components/StudyGoLogo";
 import { api } from "@/lib/api/client";
 
 export default function Home() {
@@ -105,16 +105,17 @@ export default function Home() {
                 }}
                 className="inline-block mb-6"
               >
-                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-pink-500 via-purple-500 to-cyan-500 flex items-center justify-center shadow-2xl shadow-purple-500/30 mx-auto">
-                  <Gamepad2 className="w-12 h-12 text-white" />
+                <div className="flex items-center gap-3 rounded-3xl shadow-2xl border-2 border-[#2a7a76]/80 bg-[#1E615D] pl-4 pr-6 py-4 mx-auto">
+                  <StudyGoLogo className="w-16 h-16 flex-shrink-0" />
+                  <span className="text-white font-bold text-2xl tracking-tight lowercase">studygo</span>
                 </div>
               </motion.div>
-              <h1 className="text-5xl md:text-6xl font-black text-[#4a2b3e] mb-3 drop-shadow-lg">
-                StudyGo
+              <h1 className="text-5xl md:text-6xl font-black text-black mb-3 drop-shadow-lg">
+                studygo
               </h1>
-              <p className="text-slate-700 text-lg font-semibold">
+              <p className="text-black text-lg font-semibold">
                 Learn. Play.{" "}
-                <span className="text-pink-600 font-black">Conquer.</span>
+                <span className="font-black">Conquer.</span>
               </p>
             </motion.div>
             <motion.div
@@ -124,21 +125,21 @@ export default function Home() {
               className="grid grid-cols-3 gap-3 mb-8"
             >
               {[
-                { icon: GraduationCap, label: "Course Based", color: "from-cyan-500 to-blue-600" },
-                { icon: Zap, label: "Interactive", color: "from-yellow-500 to-orange-600" },
-                { icon: Star, label: "Leaderboard", color: "from-pink-500 to-rose-600" },
+                { icon: GraduationCap, label: "Course Based", gradient: "from-[#ffc5d0] to-[#ff8a8a]" },
+                { icon: Zap, label: "Interactive", gradient: "from-[#ff9b4d] to-[#ff8a8a]" },
+                { icon: Star, label: "Leaderboard", gradient: "from-[#ffb3c6] to-[#ff8fb1]" },
               ].map((feat, i) => (
                 <motion.div
                   key={feat.label}
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.5 + i * 0.1, type: "spring" }}
-                  className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-4 text-center"
+                  className="bg-[#ffe6f0]/70 backdrop-blur border-2 border-[#ffd6e8] rounded-2xl p-4 text-center shadow-md"
                 >
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${feat.color} flex items-center justify-center mx-auto mb-2 shadow-lg`}>
-                    <feat.icon className="w-5 h-5 text-white" />
+                  <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${feat.gradient} flex items-center justify-center mx-auto mb-2 shadow-lg ring-2 ring-white/50`}>
+                    <feat.icon className="w-6 h-6 text-white" strokeWidth={2} />
                   </div>
-                  <p className="text-[11px] font-bold text-slate-700">{feat.label}</p>
+                  <p className="text-xs font-bold text-black">{feat.label}</p>
                 </motion.div>
               ))}
             </motion.div>
@@ -150,12 +151,12 @@ export default function Home() {
             >
               <Button
                 onClick={handleEnter}
-                className="w-full h-14 bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 hover:from-pink-600 hover:via-purple-600 hover:to-cyan-600 text-white font-bold text-lg rounded-2xl shadow-2xl shadow-purple-500/25 transition-all duration-300 hover:shadow-purple-500/40 hover:scale-[1.02]"
+                className="w-full h-14 bg-gradient-to-r from-[#ffc5d0] via-[#ff8a8a] to-[#ff9b4d] hover:from-[#ffd0da] hover:via-[#ff9b9b] hover:to-[#ffae6b] text-white font-bold text-lg rounded-2xl shadow-2xl shadow-pink-300/40 transition-all duration-300 hover:shadow-pink-300/50 hover:scale-[1.02]"
               >
-                <Sparkles className="w-5 h-5 mr-2" />
-                Enter StudyGo
+                <Sparkles className="w-5 h-5 mr-2" strokeWidth={2} />
+                Enter studygo
               </Button>
-              <p className="text-center text-xs text-slate-600/80 font-medium mt-3">
+              <p className="text-center text-xs text-black font-medium mt-3">
                 Australian Schools Edition • Demo v1.0
               </p>
             </motion.div>
@@ -169,13 +170,14 @@ export default function Home() {
             >
               <div className="bg-gradient-to-br from-[#ffe6f0]/95 via-[#ffd6e8]/95 to-[#ffe6de]/95 backdrop-blur-2xl rounded-3xl p-8 shadow-2xl shadow-pink-300/60 border border-[#ffb3c6]/80">
               <div className="text-center mb-6">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-pink-500 via-purple-500 to-cyan-500 flex items-center justify-center shadow-xl shadow-purple-500/30 mx-auto mb-4">
-                  <Gamepad2 className="w-8 h-8 text-white" />
+                <div className="inline-flex items-center gap-2 rounded-2xl border-2 border-[#2a7a76]/80 bg-[#1E615D] pl-3 pr-4 py-2.5 mb-4">
+                  <StudyGoLogo className="w-10 h-10 flex-shrink-0" />
+                  <span className="text-white font-bold text-lg tracking-tight lowercase">studygo</span>
                 </div>
-                <h2 className="text-2xl font-black text-[#4a2b3e] mb-1">
-                  {mode === "login" ? "Welcome Back!" : "Join StudyGo"}
+                <h2 className="text-2xl font-black text-black mb-1">
+                  {mode === "login" ? "Welcome Back!" : "Join studygo"}
                 </h2>
-                <p className="text-slate-600 text-sm font-semibold">
+                <p className="text-black text-sm font-semibold">
                   {mode === "login" ? "Log in to continue your journey" : "Create your account to start"}
                 </p>
               </div>
@@ -222,8 +224,7 @@ export default function Home() {
                 )}
                 <Button
                   type="submit"
-                  disabled={authLoading}
-                  className="w-full h-12 bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 hover:from-pink-600 hover:via-purple-600 hover:to-cyan-600 text-white font-bold rounded-xl shadow-lg shadow-purple-500/25 disabled:opacity-70 disabled:pointer-events-none"
+                  className="w-full h-12 bg-gradient-to-r from-[#ffc5d0] via-[#ff8a8a] to-[#ff9b4d] hover:from-[#ffd0da] hover:via-[#ff9b9b] hover:to-[#ffae6b] text-white font-bold rounded-xl shadow-lg shadow-pink-300/30"
                 >
                   {authLoading ? "Please wait…" : mode === "login" ? "Log In" : "Sign Up"}
                   {!authLoading && <ArrowRight className="w-4 h-4 ml-2" />}
@@ -232,23 +233,20 @@ export default function Home() {
               <div className="mt-6 text-center">
                 <button
                   type="button"
-                  onClick={() => {
-                    setMode(mode === "login" ? "signup" : "login");
-                    setAuthError(null);
-                  }}
-                  className="text-sm text-slate-600 hover:text-slate-800 transition-colors font-medium"
+                  onClick={() => setMode(mode === "login" ? "signup" : "login")}
+                  className="text-sm text-black hover:underline font-medium"
                 >
                   {mode === "login" ? (
-                    <>Don&apos;t have an account? <span className="text-pink-600 font-bold">Sign Up</span></>
+                    <>Don&apos;t have an account? <span className="font-bold">Sign Up</span></>
                   ) : (
-                    <>Already have an account? <span className="text-orange-600 font-bold">Log In</span></>
+                    <>Already have an account? <span className="font-bold">Log In</span></>
                   )}
                 </button>
               </div>
               <button
                 type="button"
                 onClick={() => setShowAuth(false)}
-                className="mt-4 text-xs text-slate-500 hover:text-slate-700 transition-colors mx-auto block font-semibold"
+                className="mt-4 text-xs text-black hover:underline mx-auto block font-semibold"
               >
                 ← Back to home
               </button>

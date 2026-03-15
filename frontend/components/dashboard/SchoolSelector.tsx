@@ -21,7 +21,7 @@ export default function SchoolSelector({
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#ffc5d0] to-[#ff8a8a] flex items-center justify-center">
           <GraduationCap className="w-4 h-4 text-white" />
         </div>
-        <h2 className="text-lg font-bold text-[#4a2b3e]">Universities</h2>
+        <h2 className="text-lg font-bold text-black">Universities</h2>
       </div>
       <ScrollArea className="flex-1">
         <div className="space-y-3 pr-2">
@@ -54,17 +54,17 @@ export default function SchoolSelector({
                 )}
                 <div>
                   <p
-                    className={`font-semibold text-sm ${selectedSchool?.id === school.id ? "text-[#c2185b]" : "text-[#4a2b3e]"}`}
+                    className={`font-semibold text-sm text-black`}
                   >
                     {school.name}
                   </p>
-                  <p className="text-xs text-[#8b5a7a] mt-0.5 font-medium">
+                  <p className="text-xs text-gray-600 mt-0.5 font-medium">
                     {school.code}
                   </p>
                 </div>
               </div>
               <ChevronRight
-                className={`w-4 h-4 transition-transform ${selectedSchool?.id === school.id ? "text-[#c2185b] translate-x-0" : "text-[#b66d94] -translate-x-2 group-hover:translate-x-0 group-hover:text-[#c2185b]"}`}
+                className={`w-4 h-4 transition-transform ${selectedSchool?.id === school.id ? "text-black translate-x-0" : "text-gray-600 -translate-x-2 group-hover:translate-x-0 group-hover:text-black"}`}
               />
             </motion.button>
           ))}

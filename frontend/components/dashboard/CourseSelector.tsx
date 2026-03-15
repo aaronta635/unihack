@@ -21,7 +21,7 @@ export default function CourseSelector({
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#ffc5d0] to-[#ff8a8a] flex items-center justify-center">
           <BookOpen className="w-4 h-4 text-white" />
         </div>
-        <h2 className="text-lg font-bold text-[#4a2b3e]">Courses</h2>
+        <h2 className="text-lg font-bold text-black">Courses</h2>
       </div>
       <ScrollArea className="flex-1">
         <div className="space-y-2 pr-2">
@@ -40,16 +40,16 @@ export default function CourseSelector({
             >
               <div>
                 <p
-                  className={`font-semibold text-sm ${selectedCourse?.id === course.id ? "text-[#c2185b]" : "text-[#4a2b3e]"}`}
+                  className="font-semibold text-sm text-black"
                 >
                   {course.code}
                 </p>
-                <p className="text-xs text-[#8b5a7a] mt-0.5 font-medium">
+                <p className="text-xs text-gray-600 mt-0.5 font-medium">
                   {course.title}
                 </p>
               </div>
               <ChevronRight
-                className={`w-4 h-4 transition-transform ${selectedCourse?.id === course.id ? "text-[#c2185b] translate-x-0" : "text-[#b66d94] -translate-x-2 group-hover:translate-x-0 group-hover:text-[#c2185b]"}`}
+                className={`w-4 h-4 transition-transform ${selectedCourse?.id === course.id ? "text-black translate-x-0" : "text-gray-600 -translate-x-2 group-hover:translate-x-0 group-hover:text-black"}`}
               />
             </motion.button>
           ))}
