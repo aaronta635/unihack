@@ -27,6 +27,13 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
 app.use(logger('dev'));
+app.use((req, res, next) => {
+  if (req.path && req.path.includes('questions')) {
+    const payload = JSON.stringify({ sessionId: '8d0709', location: 'app.js:incoming', message: 'request path', data: { method: req.method, path: req.path, url: req.originalUrl }, timestamp: Date.now(), hypothesisId: 'B' });
+    fetch('http://127.0.0.1:7838/ingest/8c87f5d4-2946-4ec3-954a-84c36029ee07', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '8d0709' }, body: payload }).catch(() => {});
+  }
+  next();
+});
 app.use(cors());
 app.use(express.json());
 
