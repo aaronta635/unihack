@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Upload, Play, FileText, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { getApiBase, getAuthHeaders } from "@/lib/api/client";
+import { apiUrl, getAuthHeaders } from "@/lib/api/client";
 
 type Week = {
   week_number: number;
@@ -43,17 +43,15 @@ export default function WeekSelector({
     }
 
     const ac = new AbortController();
-    const base =
-      process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
 
     const load = async () => {
       const results = await Promise.all(
         WEEK_NUMBERS.map(async (num) => {
           try {
             const res = await fetch(
-              `${base}/api/questions?course_id=${encodeURIComponent(
+              apiUrl(`api/questions?course_id=${encodeURIComponent(
                 course.id
-              )}&week_number=${num}`,
+              )}&week_number=${num}`),
               { signal: ac.signal }
             );
             if (!res.ok) return [num, false] as const;
@@ -86,13 +84,12 @@ export default function WeekSelector({
   
       try {
         setUploading(true);
-        const base = getApiBase();
         const formData = new FormData();
         formData.append("file", file);
         formData.append("course_id", course.id);
         formData.append("week_number", String(weekNum));
 
-        const res = await fetch(`${base}/upload/pdf`, {
+        const res = await fetch(apiUrl("upload/pdf"), {
           method: "POST",
           headers: getAuthHeaders(),
           body: formData,

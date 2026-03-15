@@ -16,10 +16,17 @@ const USE_MOCK_ENTITIES = true;
 
 export function getApiBase(): string {
   const env = process.env.NEXT_PUBLIC_API_URL?.trim();
-  const base = env || (typeof window !== "undefined"
+  const base = (env || (typeof window !== "undefined"
     ? `${window.location.protocol}//${window.location.hostname}:3000`
-    : "http://localhost:3000");
-  return base.replace(/\/+$/, "");
+    : "http://localhost:3000")).trim();
+  return base.replace(/\s+$/, "").replace(/\/+$/, "");
+}
+
+/** Build full API URL without double slashes (base may have trailing slash in env). */
+export function apiUrl(path: string): string {
+  const base = getApiBase();
+  const p = path.replace(/^\/+/, "");
+  return base ? `${base.replace(/\/+$/, "")}/${p}` : `/${p}`;
 }
 
 /** Returns headers with Bearer token when available (for authenticated API calls, e.g. admin upload). */
