@@ -1,13 +1,19 @@
 const express = require('express');
 const { getSupabase } = require('../supabaseClient');
+const { optionalAuth, requireAuth } = require('../middleware/requireAuth');
 
 const router = express.Router();
 
+const XP_PER_LEVEL = 100;
+const BASE_ATTACK = 5;
+const BASE_DEFENSE = 5;
+
 /**
- * POST /api/scores (hackathon: name/email in body, no JWT)
+ * POST /api/scores
  * Body: { score, streak, questions_answered, correct_count, player_name?, player_email?, course_id?, week_number? }
+ * Optional: Authorization Bearer <token> — if present, score is tied to user and player_stats are updated (XP, attack, defense).
  */
-router.post('/scores', async (req, res, next) => {
+router.post('/scores', optionalAuth, async (req, res, next) => {
   try {
     const {
       score,
@@ -20,9 +26,10 @@ router.post('/scores', async (req, res, next) => {
       week_number,
     } = req.body;
 
+    const scoreNum = Number(score) || 0;
     const payload = {
-      user_id: null,
-      score: Number(score) || 0,
+      user_id: req.user?.id ?? null,
+      score: scoreNum,
       streak: Number(streak) || 0,
       questions_answered: Number(questions_answered) || 0,
       correct_count: Number(correct_count) || 0,
@@ -42,7 +49,158 @@ router.post('/scores', async (req, res, next) => {
     if (error) {
       return res.status(500).json({ error: error.message });
     }
+
+    if (payload.user_id && scoreNum > 0) {
+      const { data: existing } = await supabase
+        .from('player_stats')
+        .select('xp, attack, defense, stat_points')
+        .eq('user_id', payload.user_id)
+        .single();
+
+      const prevXp = existing?.xp ?? 0;
+      const newXp = prevXp + scoreNum;
+      const oldLevel = Math.floor(prevXp / XP_PER_LEVEL);
+      const newLevel = Math.floor(newXp / XP_PER_LEVEL);
+      const attackBonus = Math.max(0, (existing?.attack ?? BASE_ATTACK) - BASE_ATTACK - oldLevel);
+      const defenseBonus = Math.max(0, (existing?.defense ?? BASE_DEFENSE) - BASE_DEFENSE - oldLevel);
+      const attack = BASE_ATTACK + newLevel + attackBonus;
+      const defense = BASE_DEFENSE + newLevel + defenseBonus;
+      const statPoints = (existing?.stat_points ?? 0) + Math.max(0, newLevel - oldLevel);
+
+      await supabase
+        .from('player_stats')
+        .upsert(
+          {
+            user_id: payload.user_id,
+            xp: newXp,
+            attack,
+            defense,
+            stat_points: statPoints,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id' }
+        );
+    }
+
     return res.status(201).json(data);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/stats
+ * Authorization: Bearer <token> required.
+ * Returns { attack, defense, xp, level } for the current user (or defaults if no row yet).
+ */
+router.get('/stats', requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Authorization required.' });
+    }
+
+    const supabase = getSupabase();
+    let row = null;
+    try {
+      const { data, error } = await supabase
+        .from('player_stats')
+        .select('attack, defense, xp, stat_points')
+        .eq('user_id', userId)
+        .single();
+      if (!error || error.code === 'PGRST116') row = data;
+    } catch (_) {
+      // Table may not exist yet; return defaults
+    }
+
+    const attack = row?.attack ?? BASE_ATTACK;
+    const defense = row?.defense ?? BASE_DEFENSE;
+    const xp = row?.xp ?? 0;
+    const level = Math.floor(xp / XP_PER_LEVEL);
+    const statPoints = row?.stat_points ?? 0;
+    const xpInCurrentLevel = xp - level * XP_PER_LEVEL;
+    const xpToNextLevel = XP_PER_LEVEL - xpInCurrentLevel;
+
+    return res.json({
+      attack,
+      defense,
+      xp,
+      level,
+      stat_points: statPoints,
+      xp_in_current_level: xpInCurrentLevel,
+      xp_to_next_level: xpToNextLevel,
+      xp_per_level: XP_PER_LEVEL,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * PATCH /api/stats
+ * Body: { type: 'attack' | 'defense' }
+ * Spend 1 stat point to add +1 to attack or defense. Requires stat_points > 0.
+ */
+router.patch('/stats', requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Authorization required.' });
+    }
+
+    const type = req.body?.type;
+    if (type !== 'attack' && type !== 'defense') {
+      return res.status(400).json({ error: 'Body must have type: "attack" or "defense".' });
+    }
+
+    const supabase = getSupabase();
+    const { data: row, error: fetchError } = await supabase
+      .from('player_stats')
+      .select('attack, defense, stat_points')
+      .eq('user_id', userId)
+      .single();
+
+    if (fetchError || !row) {
+      return res.status(404).json({ error: 'No stats found. Play a game to earn XP first.' });
+    }
+
+    const statPoints = row.stat_points ?? 0;
+    if (statPoints < 1) {
+      return res.status(400).json({ error: 'No stat points left. Level up by earning more XP!' });
+    }
+
+    const update = {
+      stat_points: statPoints - 1,
+      updated_at: new Date().toISOString(),
+    };
+    if (type === 'attack') update.attack = (row.attack ?? BASE_ATTACK) + 1;
+    else update.defense = (row.defense ?? BASE_DEFENSE) + 1;
+
+    const { data: updated, error: updateError } = await supabase
+      .from('player_stats')
+      .update(update)
+      .eq('user_id', userId)
+      .select('attack, defense, xp, stat_points')
+      .single();
+
+    if (updateError) {
+      return res.status(500).json({ error: updateError.message });
+    }
+
+    const xp = updated?.xp ?? 0;
+    const level = Math.floor(xp / XP_PER_LEVEL);
+    const xpInCurrentLevel = xp - level * XP_PER_LEVEL;
+
+    return res.json({
+      attack: updated?.attack ?? row.attack,
+      defense: updated?.defense ?? row.defense,
+      xp,
+      level,
+      stat_points: (updated?.stat_points ?? 0),
+      xp_in_current_level: xpInCurrentLevel,
+      xp_to_next_level: XP_PER_LEVEL - xpInCurrentLevel,
+      xp_per_level: XP_PER_LEVEL,
+    });
   } catch (err) {
     next(err);
   }

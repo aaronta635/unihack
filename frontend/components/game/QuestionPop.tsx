@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, X, Bot, User as UserIcon, ArrowLeft } from "lucide-react";
+import { Sparkles, Bot, User as UserIcon, ArrowLeft } from "lucide-react";
 import type { McqQuestion } from "@/lib/types/entities";
 import { useTutorSettings } from "@/contexts/TutorSettingsContext";
 import { getPersonalityFallbackMessages } from "@/lib/tutorPersonalities";
@@ -90,33 +90,6 @@ function McqSection({
           </motion.button>
         ))}
       </div>
-      {isAnswerRevealed && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-3"
-        >
-          <div
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm ${
-              selectedOptionIndex === question.correct_index
-                ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/40"
-                : "bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-lg shadow-red-500/40"
-            }`}
-          >
-            {selectedOptionIndex === question.correct_index ? (
-              <>
-                <Sparkles className="w-4 h-4" />
-                +10 Points
-              </>
-            ) : (
-              <>
-                <X className="w-4 h-4" />
-                Wrong
-              </>
-            )}
-          </div>
-        </motion.div>
-      )}
     </div>
   );
 }
@@ -221,21 +194,11 @@ function AiChatSection({ messages, onSendUserMessage, isLoading = false }: AiCha
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           placeholder="Ask a follow-up or type your thoughts..."
-<<<<<<< HEAD
           className="flex-1 rounded-lg bg-white/90 border border-[#ffd6e8] px-3 py-2 text-sm text-[#4a2b3e] placeholder:text-[#b66d94] focus:outline-none focus:ring-2 focus:ring-[#ffb3c6]/60 focus:border-[#ffb3c6]/80"
         />
         <button
           type="submit"
           className="px-3 py-2 rounded-lg bg-gradient-to-r from-[#ffc5d0] to-[#ff8a8a] hover:from-[#ffd0da] hover:to-[#ff9b9b] text-xs font-bold text-[#4a2b3e] border border-[#ffb3c6]/80 transition-colors"
-=======
-          disabled={isLoading}
-          className="flex-1 rounded-lg bg-slate-800/80 border border-slate-600/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/60 focus:border-cyan-500/80 disabled:opacity-60 disabled:cursor-not-allowed"
-        />
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="px-3 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-xs font-bold text-slate-900 border border-cyan-300/80 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
->>>>>>> dbedd9924679816a85c8ceb6b0482738ec60a295
         >
           Send
         </button>
@@ -316,15 +279,18 @@ export default function QuestionPopup({
     [responseMode, personalityKey]
   );
 
-  // Reset chat and welcome when question changes (e.g. next checkpoint)
+  // Reset chat and welcome when question *content* changes (e.g. next checkpoint), not on object ref change
   useEffect(() => {
     welcomeSentRef.current = false;
     setChatMessages([]);
-  }, [question]);
+  }, [question?.question]);
 
   useEffect(() => {
     return () => {
       stopTutorVoice();
+      setTimeout(() => {
+        lastWelcomeQuestionKey = null;
+      }, 200);
     };
   }, []);
 
@@ -333,14 +299,21 @@ export default function QuestionPopup({
     if (responseMode !== "voice") stopTutorVoice();
   }, [responseMode]);
 
-  // AI welcome when popup opens (once per question) — always add message; speak only once (avoids double voice in Strict Mode)
   useEffect(() => {
     const questionKey = question.question ?? "";
-    const alreadySpoke = lastWelcomeQuestionKey === questionKey;
-    if (!alreadySpoke) lastWelcomeQuestionKey = questionKey;
-    welcomeSentRef.current = true;
     const messages = getPersonalityFallbackMessages(personalityKey);
-    addChatMessage(messages.welcome, "ai", alreadySpoke ? { skipVoice: true } : undefined);
+    const alreadyDidWelcome = lastWelcomeQuestionKey === questionKey;
+
+    if (alreadyDidWelcome) {
+      if (chatMessages.length > 0) return;
+      welcomeSentRef.current = true;
+      addChatMessage(messages.welcome, "ai", { skipVoice: true });
+      return;
+    }
+
+    lastWelcomeQuestionKey = questionKey;
+    welcomeSentRef.current = true;
+    addChatMessage(messages.welcome, "ai");
   }, [question, addChatMessage, personalityKey]);
 
   const handleOptionSelect = useCallback(

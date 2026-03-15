@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
@@ -16,21 +17,66 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import AnimeBackground from "@/components/game/Background";
 import StudyGoLogo from "@/components/StudyGoLogo";
+import { api } from "@/lib/api/client";
 
 export default function Home() {
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams.get("return_url") ?? "/Dashboard";
+
   const [showAuth, setShowAuth] = useState(false);
   const [mode, setMode] = useState<"login" | "signup">("login");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
   });
 
-  const handleEnter = () => setShowAuth(true);
+  const handleEnter = () => {
+    setAuthError(null);
+    setShowAuth(true);
+  };
 
-  const handleAuth = (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    window.location.href = "/Dashboard";
+    setAuthError(null);
+    setAuthLoading(true);
+    try {
+      if (mode === "login") {
+        const { user, error } = await api.auth.login(formData.email, formData.password);
+        if (error) {
+          setAuthError(error);
+          setAuthLoading(false);
+          return;
+        }
+        if (user) window.location.href = returnUrl;
+        return;
+      }
+      const { user: signupUser, error: signupError } = await api.auth.signup(
+        formData.email,
+        formData.password,
+        formData.name || undefined
+      );
+      if (signupError) {
+        setAuthError(signupError);
+        setAuthLoading(false);
+        return;
+      }
+      if (signupUser) {
+        const { error: loginError } = await api.auth.login(formData.email, formData.password);
+        if (!loginError) {
+          window.location.href = returnUrl;
+          return;
+        }
+      }
+      setAuthError(null);
+      setAuthLoading(false);
+      setMode("login");
+    } catch {
+      setAuthError("Something went wrong. Try again.");
+      setAuthLoading(false);
+    }
   };
 
   return (
@@ -171,12 +217,17 @@ export default function Home() {
                     required
                   />
                 </div>
+                {authError && (
+                  <p className="text-sm text-red-600 font-semibold bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+                    {authError}
+                  </p>
+                )}
                 <Button
                   type="submit"
                   className="w-full h-12 bg-gradient-to-r from-[#ffc5d0] via-[#ff8a8a] to-[#ff9b4d] hover:from-[#ffd0da] hover:via-[#ff9b9b] hover:to-[#ffae6b] text-white font-bold rounded-xl shadow-lg shadow-pink-300/30"
                 >
-                  {mode === "login" ? "Log In" : "Sign Up"}
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                  {authLoading ? "Please wait…" : mode === "login" ? "Log In" : "Sign Up"}
+                  {!authLoading && <ArrowRight className="w-4 h-4 ml-2" />}
                 </Button>
               </form>
               <div className="mt-6 text-center">

@@ -1,10 +1,14 @@
-require('dotenv').config();
+const path = require('path');
+const envPath = path.join(__dirname, '.env');
+require('dotenv').config({ path: envPath });
+if (!process.env.FT_MODEL_BEST_FRIEND) {
+  console.warn("[env] FT_MODEL_BEST_FRIEND is not set. Tutor chat will return 500. Loaded .env from:", envPath);
+}
 
 const logger = require('morgan');
 const cors = require('cors');
 const createError = require('http-errors');
 const express = require('express');
-const path = require('path');
 const cookieParser = require('cookie-parser');
 const uploadRouter = require('./routes/upload');
 const tutorRouter = require('./routes/tutor');
