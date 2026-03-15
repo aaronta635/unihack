@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api/client";
-import { LogOut, Gamepad2, Menu, Shield, ShieldOff, GraduationCap } from "lucide-react";
+import { LogOut, Gamepad2, Menu, Swords, Shield, ShieldOff, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AnimeBackground from "@/components/game/Background";
 import CourseSidebar from "@/components/dashboard/CourseSidebar";

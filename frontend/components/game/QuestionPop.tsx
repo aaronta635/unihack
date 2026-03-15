@@ -279,15 +279,18 @@ export default function QuestionPopup({
     [responseMode, personalityKey]
   );
 
-  // Reset chat and welcome when question changes (e.g. next checkpoint)
+  // Reset chat and welcome when question *content* changes (e.g. next checkpoint), not on object ref change
   useEffect(() => {
     welcomeSentRef.current = false;
     setChatMessages([]);
-  }, [question]);
+  }, [question?.question]);
 
   useEffect(() => {
     return () => {
       stopTutorVoice();
+      setTimeout(() => {
+        lastWelcomeQuestionKey = null;
+      }, 200);
     };
   }, []);
 
@@ -296,14 +299,21 @@ export default function QuestionPopup({
     if (responseMode !== "voice") stopTutorVoice();
   }, [responseMode]);
 
-  // AI welcome when popup opens (once per question) — always add message; speak only once (avoids double voice in Strict Mode)
   useEffect(() => {
     const questionKey = question.question ?? "";
-    const alreadySpoke = lastWelcomeQuestionKey === questionKey;
-    if (!alreadySpoke) lastWelcomeQuestionKey = questionKey;
-    welcomeSentRef.current = true;
     const messages = getPersonalityFallbackMessages(personalityKey);
-    addChatMessage(messages.welcome, "ai", alreadySpoke ? { skipVoice: true } : undefined);
+    const alreadyDidWelcome = lastWelcomeQuestionKey === questionKey;
+
+    if (alreadyDidWelcome) {
+      if (chatMessages.length > 0) return;
+      welcomeSentRef.current = true;
+      addChatMessage(messages.welcome, "ai", { skipVoice: true });
+      return;
+    }
+
+    lastWelcomeQuestionKey = questionKey;
+    welcomeSentRef.current = true;
+    addChatMessage(messages.welcome, "ai");
   }, [question, addChatMessage, personalityKey]);
 
   const handleOptionSelect = useCallback(
