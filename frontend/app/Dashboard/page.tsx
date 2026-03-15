@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api/client";
 import { LogOut, Gamepad2, Menu, Shield, ShieldOff, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,12 @@ import CourseSidebar from "@/components/dashboard/CourseSidebar";
 import Leaderboard from "@/components/dashboard/Leaderboard";
 import { useAdminMode } from "@/contexts/AdminModeContext";
 import StudyGoLogo from "@/components/StudyGoLogo";
+
+type UserWithRole = { app_metadata?: { role?: string }; user_metadata?: { role?: string } };
+function isServerAdmin(user: unknown): boolean {
+  const u = user as UserWithRole | null | undefined;
+  return u?.app_metadata?.role === "admin" || u?.user_metadata?.role === "admin";
+}
 
 function getDisplayName(user: { user_metadata?: { display_name?: string; full_name?: string }; email?: string } | null): string {
   if (!user) return "User";
@@ -26,11 +32,13 @@ const HELLO_FONTS = [
 
 export default function Dashboard() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { isAdmin, setAdmin } = useAdminMode();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [fontIndex, setFontIndex] = useState(0);
   const [useItalic, setUseItalic] = useState(false);
   const [useBold, setUseBold] = useState(true);
+  const [roleUpdating, setRoleUpdating] = useState(false);
 
   const { data: meData } = useQuery({
     queryKey: ["auth", "me"],
@@ -38,6 +46,27 @@ export default function Dashboard() {
   });
   const user = meData?.user ?? null;
   const displayName = getDisplayName(user);
+
+  // Sync Admin/Student toggle with persisted role from server
+  useEffect(() => {
+    if (user === null || user === undefined) return;
+    setAdmin(isServerAdmin(user));
+  }, [user, setAdmin]);
+
+  const handleToggleRole = async () => {
+    const newRole = isAdmin ? "student" : "admin";
+    setRoleUpdating(true);
+    try {
+      const result = await api.auth.updateRole(newRole);
+      if (result.error) {
+        alert(result.error);
+        return;
+      }
+      await queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
+    } finally {
+      setRoleUpdating(false);
+    }
+  };
 
   // Rotate font every 0.8s with mixed italic, normal, and bold
   useEffect(() => {
@@ -90,7 +119,8 @@ export default function Dashboard() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setAdmin(!isAdmin)}
+              onClick={handleToggleRole}
+              disabled={roleUpdating}
               className={`font-semibold border-2 transition-colors ${
                 isAdmin
                   ? "bg-[#ffe6f0]/80 border-[#ff8fb1] text-[#c2185b] hover:bg-[#ffd6e8]"
@@ -103,7 +133,7 @@ export default function Dashboard() {
               ) : (
                 <ShieldOff className="w-4 h-4 mr-1.5" />
               )}
-              {isAdmin ? "Admin" : "Student"}
+              {roleUpdating ? "Updating…" : isAdmin ? "Admin" : "Student"}
             </Button>
             <Button
               onClick={() => setSidebarOpen(true)}

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const supabase = require('../supabase');
+const { requireAuth, requireAdmin } = require('../middleware/requireAuth');
 const pdfParsePkg = require('pdf-parse');
 const PDFParse = pdfParsePkg.PDFParse || pdfParsePkg.default || pdfParsePkg;
 const OpenAI = require('openai');
@@ -74,8 +75,12 @@ const upload = multer({
  *         description: PDF uploaded successfully
  *       400:
  *         description: Upload failed
+ *       401:
+ *         description: Authorization required
+ *       403:
+ *         description: Only admins can upload
  */
-router.post('/pdf', upload.single('file'), async (req, res) => {
+router.post('/pdf', requireAuth, requireAdmin, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
