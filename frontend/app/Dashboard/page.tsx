@@ -87,7 +87,7 @@ export default function Dashboard() {
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["stats"],
     queryFn: () => api.stats.get(),
-    enabled: !!user,
+    enabled: !!user && !isAdmin,
   });
 
   return (
@@ -176,19 +176,21 @@ export default function Dashboard() {
             </p>
           </motion.section>
 
-          {/* Stats: attack, defense, XP (when logged in) */}
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-          >
-            <StatsCard
-              stats={stats ?? null}
-              isLoading={!!user && statsLoading}
-              isLoggedIn={!!user}
-              onStatsUpdated={() => queryClient.invalidateQueries({ queryKey: ["stats"] })}
-            />
-          </motion.section>
+          {/* Stats: attack, defense, XP (when logged in as student; hidden for admin) */}
+          {!isAdmin && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+            >
+              <StatsCard
+                stats={stats ?? null}
+                isLoading={!!user && statsLoading}
+                isLoggedIn={!!user}
+                onStatsUpdated={() => queryClient.invalidateQueries({ queryKey: ["stats"] })}
+              />
+            </motion.section>
+          )}
 
           {/* Entry to battlefield: choose course & week on Arena page */}
           <motion.section
